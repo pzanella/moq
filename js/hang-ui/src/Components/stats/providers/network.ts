@@ -45,6 +45,7 @@ export class NetworkProvider extends BaseProvider {
 	private networkInfo?: NetworkInformation;
 	/** Polling interval ID */
 	private updateInterval?: number;
+	private readonly boundUpdateDisplayData = this.updateDisplayData.bind(this);
 
 	/**
 	 * Initialize network provider with connection listeners
@@ -60,15 +61,12 @@ export class NetworkProvider extends BaseProvider {
 			return;
 		}
 
-		this.networkInfo.addEventListener?.("change", this.updateDisplayData.bind(this));
+		this.networkInfo.addEventListener?.("change", this.boundUpdateDisplayData);
 
-		window.addEventListener("online", this.updateDisplayData.bind(this));
-		window.addEventListener("offline", this.updateDisplayData.bind(this));
+		window.addEventListener("online", this.boundUpdateDisplayData);
+		window.addEventListener("offline", this.boundUpdateDisplayData);
 
-		this.updateInterval = window.setInterval(
-			this.updateDisplayData.bind(this),
-			NetworkProvider.POLLING_INTERVAL_MS,
-		);
+		this.updateInterval = window.setInterval(this.boundUpdateDisplayData, NetworkProvider.POLLING_INTERVAL_MS);
 		this.updateDisplayData();
 	}
 
@@ -77,10 +75,10 @@ export class NetworkProvider extends BaseProvider {
 	 */
 	override cleanup(): void {
 		if (this.networkInfo?.removeEventListener) {
-			this.networkInfo.removeEventListener("change", this.updateDisplayData.bind(this));
+			this.networkInfo.removeEventListener("change", this.boundUpdateDisplayData);
 		}
-		window.removeEventListener("online", this.updateDisplayData.bind(this));
-		window.removeEventListener("offline", this.updateDisplayData.bind(this));
+		window.removeEventListener("online", this.boundUpdateDisplayData);
+		window.removeEventListener("offline", this.boundUpdateDisplayData);
 		if (this.updateInterval !== undefined) {
 			clearInterval(this.updateInterval);
 		}

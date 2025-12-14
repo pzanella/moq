@@ -60,14 +60,16 @@ export class AudioProvider extends BaseProvider {
 			// Only calculate bitrate if there's actual data change
 			if (bytesDelta > 0) {
 				const elapsedMs = now - this.previousWhen;
-				const bitsPerSecond = bytesDelta * 8 * (1000 / elapsedMs);
+				if (elapsedMs > 0) {
+					const bitsPerSecond = bytesDelta * 8 * (1000 / elapsedMs);
 
-				if (bitsPerSecond >= 1_000_000) {
-					bitrate = `${(bitsPerSecond / 1_000_000).toFixed(1)}Mbps`;
-				} else if (bitsPerSecond >= 1_000) {
-					bitrate = `${(bitsPerSecond / 1_000).toFixed(0)}kbps`;
-				} else {
-					bitrate = `${bitsPerSecond.toFixed(0)}bps`;
+					if (bitsPerSecond >= 1_000_000) {
+						bitrate = `${(bitsPerSecond / 1_000_000).toFixed(1)}Mbps`;
+					} else if (bitsPerSecond >= 1_000) {
+						bitrate = `${(bitsPerSecond / 1_000).toFixed(0)}kbps`;
+					} else {
+						bitrate = `${bitsPerSecond.toFixed(0)}bps`;
+					}
 				}
 			}
 		}
@@ -103,7 +105,7 @@ export class AudioProvider extends BaseProvider {
 	 */
 	override cleanup(): void {
 		if (this.updateInterval !== undefined) {
-			clearInterval(this.updateInterval);
+			window.clearInterval(this.updateInterval);
 		}
 		super.cleanup();
 	}

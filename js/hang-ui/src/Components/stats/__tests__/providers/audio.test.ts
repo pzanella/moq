@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AudioProvider } from "../../providers/audio";
 import type { AudioConfig, AudioSource, AudioStats, ProviderContext, ProviderProps } from "../../types";
+import { createMockProviderProps } from "../utils";
 
 declare global {
 	var __advanceTime: (ms: number) => void;
@@ -11,19 +12,23 @@ describe("AudioProvider", () => {
 	let context: ProviderContext;
 	let setDisplayData: ReturnType<typeof vi.fn>;
 	let intervalCallback: ((interval: number) => void) | null = null;
+	let originalWindow: typeof window;
+	let originalPerformance: typeof performance;
+	let mockClearInterval: ReturnType<typeof vi.fn>;
 
 	beforeEach(() => {
+		originalWindow = global.window;
+		originalPerformance = global.performance as unknown as Performance;
 		setDisplayData = vi.fn();
 		context = { setDisplayData };
 		intervalCallback = null;
 
 		// Mock window functions
-		const mockSetInterval = vi.fn((callback: (interval: number) => void) => {
-			intervalCallback = callback;
-			return 1 as unknown as NodeJS.Timeout;
+		const mockSetInterval = vi.fn((callback: () => void) => {
+			intervalCallback = callback as unknown as (interval: number) => void;
+			return 1;
 		});
-
-		const mockClearInterval = vi.fn();
+		mockClearInterval = vi.fn();
 
 		global.window = {
 			setInterval: mockSetInterval,
@@ -44,6 +49,8 @@ describe("AudioProvider", () => {
 
 	afterEach(() => {
 		provider?.cleanup();
+		global.window = originalWindow;
+		global.performance = originalPerformance as unknown as Performance;
 	});
 
 	it("should display N/A when audio source is not available", () => {
@@ -236,13 +243,13 @@ describe("AudioProvider", () => {
 	});
 
 	it("should cleanup interval on dispose", () => {
-		const props: ProviderProps = {};
+		const props: ProviderProps = createMockProviderProps({ video: false });
 		provider = new AudioProvider(props);
 		provider.setup(context);
 
 		provider.cleanup();
 
-		// Verify that cleanup was called (the actual clearInterval is mocked)
-		expect(provider).toBeDefined();
+		expect(mockClearInterval).toHaveBeenCalledTimes(1);
+		expect(mockClearInterval).toHaveBeenCalledWith(1);
 	});
 });

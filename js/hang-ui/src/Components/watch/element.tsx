@@ -25,7 +25,15 @@ customElement("hang-watch-ui", {}, function WatchUIWebComponent(_, { element }) 
 					<style>{styles}</style>
 					<div class="watchVideoContainer">
 						<slot />
-						<Stats context={WatchUIContext} getElement={(ctx) => ctx?.hangWatch as ProviderProps} />
+						<Stats
+							context={WatchUIContext}
+							getElement={(ctx) =>
+								({
+									audio: { source: ctx?.hangWatch.audio.source },
+									video: { source: ctx?.hangWatch.video.source },
+								}) as ProviderProps
+							}
+						/>
 						<BufferingIndicator />
 					</div>
 					<WatchControls />
