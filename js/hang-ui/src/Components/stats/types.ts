@@ -1,12 +1,9 @@
-/**
- * Icon type for stats metrics
- */
-export type Icons = "network" | "video" | "audio" | "buffer";
+export type KnownStatsProviders = "network" | "video" | "audio" | "buffer";
 
 /**
- * Context passed to handlers for updating display data
+ * Context passed to providers for updating display data
  */
-export interface HandlerContext {
+export interface ProviderContext {
 	setDisplayData: (data: string) => void;
 }
 
@@ -93,22 +90,9 @@ export interface VideoSource {
 }
 
 /**
- * Props passed to metric handlers containing stream sources
+ * Props passed to metric providers containing stream sources
  */
-export interface HandlerProps {
+export interface ProviderProps {
 	audio?: AudioSource;
 	video?: VideoSource;
 }
-
-/**
- * Interface for metric handler implementations
- */
-export interface IStatsHandler {
-	setup(context: HandlerContext): void;
-	cleanup(): void;
-}
-
-/**
- * Constructor type for metric handler classes
- */
-export type HandlerConstructor = new (props: HandlerProps) => IStatsHandler;

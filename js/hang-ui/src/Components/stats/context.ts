@@ -1,10 +1,10 @@
 import { createContext, useContext } from "solid-js";
-import type { HandlerProps } from "./types";
+import type { ProviderProps } from "./types";
 
 /**
  * Context providing stream sources to child components
  */
-export const StatsContext = createContext<HandlerProps>({});
+export const StatsContext = createContext<ProviderProps>({});
 
 /**
  * Hook to access stream sources from context
@@ -12,5 +12,8 @@ export const StatsContext = createContext<HandlerProps>({});
  */
 export const useMetrics = () => {
 	const context = useContext(StatsContext);
+	if (!context || (!context.audio && !context.video)) {
+		throw new Error("useMetrics must be used inside Stats when both audio and video are available");
+	}
 	return context;
 };

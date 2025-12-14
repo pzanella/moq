@@ -1,18 +1,17 @@
-import type { HandlerContext } from "../types";
-import { BaseHandler } from "./base";
+import type { ProviderContext } from "../types";
+import { BaseProvider } from "./base";
 
 /**
- * Handler for video stream metrics (resolution, frame rate, bitrate)
+ * Provider for video stream metrics (resolution, frame rate, bitrate)
  */
-export class VideoHandler extends BaseHandler {
+export class VideoProvider extends BaseProvider {
 	/** Polling interval in milliseconds */
 	private static readonly POLLING_INTERVAL_MS = 250;
 	/** Display context for updating metrics */
-	private context: HandlerContext | undefined;
+	private context: ProviderContext | undefined;
 	/** Polling interval ID */
 	private updateInterval: number | undefined;
 	/** Bound callback for display updates */
-	private updateDisplay = () => this.updateDisplayData();
 	/** Previous frame count for FPS calculation */
 	private previousFrameCount = 0;
 	/** Previous timestamp for FPS calculation */
@@ -23,9 +22,9 @@ export class VideoHandler extends BaseHandler {
 	private previousWhen = 0;
 
 	/**
-	 * Initialize video handler with polling interval
+	 * Initialize video provider with polling interval
 	 */
-	setup(context: HandlerContext): void {
+	setup(context: ProviderContext): void {
 		this.context = context;
 		const video = this.props.video;
 
@@ -34,7 +33,7 @@ export class VideoHandler extends BaseHandler {
 			return;
 		}
 
-		this.updateInterval = window.setInterval(this.updateDisplay, VideoHandler.POLLING_INTERVAL_MS);
+		this.updateInterval = window.setInterval(this.updateDisplayData.bind(this), VideoProvider.POLLING_INTERVAL_MS);
 		this.previousWhen = performance.now();
 		this.updateDisplayData();
 	}

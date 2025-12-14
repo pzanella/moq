@@ -1,19 +1,19 @@
 import type { Getter } from "@moq/signals";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { BufferProvider } from "../../providers/buffer";
 import type {
 	BufferStatus,
-	HandlerContext,
-	HandlerProps,
+	ProviderContext,
+	ProviderProps,
 	SyncStatus,
 	VideoResolution,
 	VideoSource,
 	VideoStats,
-} from "../types";
-import { BufferHandler } from "./buffer";
+} from "../../types";
 
-describe("BufferHandler", () => {
-	let handler: BufferHandler;
-	let context: HandlerContext;
+describe("BufferProvider", () => {
+	let provider: BufferProvider;
+	let context: ProviderContext;
 	let setDisplayData: ReturnType<typeof vi.fn>;
 
 	/**
@@ -85,9 +85,9 @@ describe("BufferHandler", () => {
 	});
 
 	it("should display N/A when video source is not available", () => {
-		const props: HandlerProps = {};
-		handler = new BufferHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = {};
+		provider = new BufferProvider(props);
+		provider.setup(context);
 
 		expect(setDisplayData).toHaveBeenCalledWith("N/A");
 	});
@@ -115,9 +115,9 @@ describe("BufferHandler", () => {
 			},
 		});
 
-		const props: HandlerProps = { video };
-		handler = new BufferHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = { video };
+		provider = new BufferProvider(props);
+		provider.setup(context);
 
 		// Wait for the effect to run
 		await Promise.resolve();
@@ -145,9 +145,9 @@ describe("BufferHandler", () => {
 			},
 		});
 
-		const props: HandlerProps = { video };
-		handler = new BufferHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = { video };
+		provider = new BufferProvider(props);
+		provider.setup(context);
 
 		// Wait for the effect to run
 		await Promise.resolve();
@@ -175,9 +175,9 @@ describe("BufferHandler", () => {
 			},
 		});
 
-		const props: HandlerProps = { video };
-		handler = new BufferHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = { video };
+		provider = new BufferProvider(props);
+		provider.setup(context);
 
 		// Wait for the effect to run
 		await Promise.resolve();
@@ -208,9 +208,9 @@ describe("BufferHandler", () => {
 			},
 		});
 
-		const props: HandlerProps = { video };
-		handler = new BufferHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = { video };
+		provider = new BufferProvider(props);
+		provider.setup(context);
 
 		// Wait for the effect to run
 		await Promise.resolve();
@@ -241,9 +241,9 @@ describe("BufferHandler", () => {
 			},
 		});
 
-		const props: HandlerProps = { video };
-		handler = new BufferHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = { video };
+		provider = new BufferProvider(props);
+		provider.setup(context);
 
 		// Wait for the effect to run
 		await Promise.resolve();
@@ -274,9 +274,9 @@ describe("BufferHandler", () => {
 			},
 		});
 
-		const props: HandlerProps = { video };
-		handler = new BufferHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = { video };
+		provider = new BufferProvider(props);
+		provider.setup(context);
 
 		// Wait for the effect to run
 		await Promise.resolve();

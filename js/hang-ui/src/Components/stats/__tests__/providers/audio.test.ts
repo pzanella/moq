@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { AudioConfig, AudioSource, AudioStats, HandlerContext, HandlerProps } from "../types";
-import { AudioHandler } from "./audio";
+import { AudioProvider } from "../../providers/audio";
+import type { AudioConfig, AudioSource, AudioStats, ProviderContext, ProviderProps } from "../../types";
 
 declare global {
 	var __advanceTime: (ms: number) => void;
 }
 
-describe("AudioHandler", () => {
-	let handler: AudioHandler;
-	let context: HandlerContext;
+describe("AudioProvider", () => {
+	let provider: AudioProvider;
+	let context: ProviderContext;
 	let setDisplayData: ReturnType<typeof vi.fn>;
 	let intervalCallback: ((interval: number) => void) | null = null;
 
@@ -43,13 +43,13 @@ describe("AudioHandler", () => {
 	});
 
 	afterEach(() => {
-		handler?.cleanup();
+		provider?.cleanup();
 	});
 
 	it("should display N/A when audio source is not available", () => {
-		const props: HandlerProps = {};
-		handler = new AudioHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = {};
+		provider = new AudioProvider(props);
+		provider.setup(context);
 
 		expect(setDisplayData).toHaveBeenCalledWith("N/A");
 	});
@@ -81,9 +81,9 @@ describe("AudioHandler", () => {
 			},
 		};
 
-		const props: HandlerProps = { audio };
-		handler = new AudioHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = { audio };
+		provider = new AudioProvider(props);
+		provider.setup(context);
 
 		expect(setDisplayData).toHaveBeenCalledWith("48.0kHz\n2ch\nN/A\nopus");
 	});
@@ -115,12 +115,12 @@ describe("AudioHandler", () => {
 			},
 		};
 
-		const props: HandlerProps = { audio };
-		handler = new AudioHandler(props);
+		const props: ProviderProps = { audio };
+		provider = new AudioProvider(props);
 
 		// First call - start with bytes already flowing
 		peekFn.mockReturnValue({ bytesReceived: 5000 } as AudioStats);
-		handler.setup(context);
+		provider.setup(context);
 		expect(setDisplayData).toHaveBeenCalledWith("48.0kHz\n2ch\nN/A\nopus");
 
 		// Simulate bytesReceived increasing: 6250 bytes delta = 200 kbps at 250ms interval
@@ -155,9 +155,9 @@ describe("AudioHandler", () => {
 			},
 		};
 
-		const props: HandlerProps = { audio };
-		handler = new AudioHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = { audio };
+		provider = new AudioProvider(props);
+		provider.setup(context);
 
 		expect(setDisplayData).toHaveBeenCalledWith("N/A");
 	});
@@ -187,9 +187,9 @@ describe("AudioHandler", () => {
 			},
 		};
 
-		const props: HandlerProps = { audio };
-		handler = new AudioHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = { audio };
+		provider = new AudioProvider(props);
+		provider.setup(context);
 
 		expect(setDisplayData).toHaveBeenCalledWith("44.1kHz\n1ch\nN/A\nopus");
 	});
@@ -221,13 +221,12 @@ describe("AudioHandler", () => {
 			},
 		};
 
-		const props: HandlerProps = { audio };
-		handler = new AudioHandler(props);
+		const props: ProviderProps = { audio };
+		provider = new AudioProvider(props);
 
 		// First call - display audio config with stats placeholder on first call
 		peekFn.mockReturnValue({ bytesReceived: 48000 } as AudioStats);
-		handler.setup(context);
-
+		provider.setup(context);
 		// Simulate 5 Mbps: 156250 bytes delta = 5000000 bits/s = 5 Mbps
 		peekFn.mockReturnValue({ bytesReceived: 204250 } as AudioStats);
 		global.__advanceTime(250);
@@ -237,13 +236,13 @@ describe("AudioHandler", () => {
 	});
 
 	it("should cleanup interval on dispose", () => {
-		const props: HandlerProps = {};
-		handler = new AudioHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = {};
+		provider = new AudioProvider(props);
+		provider.setup(context);
 
-		handler.cleanup();
+		provider.cleanup();
 
 		// Verify that cleanup was called (the actual clearInterval is mocked)
-		expect(handler).toBeDefined();
+		expect(provider).toBeDefined();
 	});
 });

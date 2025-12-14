@@ -1,8 +1,6 @@
-import { dirname } from "node:path";
 import { readFileSync } from "node:fs";
 import nodeResolve from "@rollup/plugin-node-resolve";
 import esbuild from "rollup-plugin-esbuild";
-import { compileString } from "sass";
 import solid from "unplugin-solid/rollup";
 
 function inlineCss() {
@@ -12,15 +10,6 @@ function inlineCss() {
 			if (id.endsWith(".css?inline")) {
 				const realId = id.replace(/\?inline$/, "");
 				const css = readFileSync(realId, "utf8");
-				return `export default ${JSON.stringify(css)};`;
-			}
-			if (id.endsWith(".scss?inline")) {
-				const realId = id.replace(/\?inline$/, "");
-				const scssContent = readFileSync(realId, "utf8");
-				const result = compileString(scssContent, {
-					loadPaths: [dirname(realId)],
-				});
-				const css = result.css;
 				return `export default ${JSON.stringify(css)};`;
 			}
 		},

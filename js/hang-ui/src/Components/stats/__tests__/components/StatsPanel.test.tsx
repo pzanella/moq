@@ -1,66 +1,19 @@
 import { render } from "solid-js/web";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import type { HandlerProps } from "../../types";
-import { StatsPanel } from "../StatsPanel";
-
-const mockAudioVideo: HandlerProps = {
-	audio: {
-		source: {
-			active: {
-				peek: () => "audio-data",
-				changed: () => () => {},
-				subscribe: () => () => {},
-			},
-			config: {
-				peek: () => ({ sampleRate: 48000, numberOfChannels: 2, bitrate: 128000, codec: "opus" }),
-				changed: () => () => {},
-				subscribe: () => () => {},
-			},
-			stats: {
-				peek: () => ({ bytesReceived: 0 }),
-				changed: () => () => {},
-				subscribe: () => () => {},
-			},
-		},
-	},
-	video: {
-		source: {
-			display: {
-				peek: () => ({ width: 1920, height: 1080 }),
-				changed: () => () => {},
-				subscribe: () => () => {},
-			},
-			syncStatus: {
-				peek: () => ({ state: "ready" as const }),
-				changed: () => () => {},
-				subscribe: () => () => {},
-			},
-			bufferStatus: {
-				peek: () => ({ state: "filled" as const }),
-				changed: () => () => {},
-				subscribe: () => () => {},
-			},
-			latency: {
-				peek: () => 100,
-				changed: () => () => {},
-				subscribe: () => () => {},
-			},
-			stats: {
-				peek: () => ({ frameCount: 0, timestamp: 0, bytesReceived: 0 }),
-				changed: () => () => {},
-				subscribe: () => () => {},
-			},
-		},
-	},
-};
+import { statsDetailItems } from "../../components/icons";
+import { StatsPanel } from "../../components/StatsPanel";
+import type { ProviderProps } from "../../types";
+import { createMockProviderProps } from "../utils";
 
 describe("StatsPanel", () => {
 	let container: HTMLDivElement;
 	let dispose: (() => void) | undefined;
+	let mockAudioVideo: ProviderProps;
 
 	beforeEach(() => {
 		container = document.createElement("div");
 		document.body.appendChild(container);
+		mockAudioVideo = createMockProviderProps();
 	});
 
 	afterEach(() => {
@@ -80,7 +33,7 @@ describe("StatsPanel", () => {
 		dispose = render(() => <StatsPanel audio={mockAudioVideo.audio} video={mockAudioVideo.video} />, container);
 
 		const items = container.querySelectorAll(".stats__item");
-		expect(items.length).toBe(4);
+		expect(items.length).toBe(statsDetailItems.length);
 	});
 
 	it("renders items with correct icon types", () => {

@@ -1,51 +1,51 @@
-import { createEffect, createSignal, onCleanup } from "solid-js";
-import { getHandlerClass } from "../handlers/registry";
-import type { HandlerProps, Icons } from "../types";
+import { createEffect, createSignal, type JSX, onCleanup } from "solid-js";
+import { getStatsInformationProvider } from "../providers/registry";
+import type { KnownStatsProviders, ProviderProps } from "../types";
 
 /**
  * Props for individual stats metric item
  */
-interface StatsItemProps extends HandlerProps {
+interface StatsItemProps extends ProviderProps {
+	name: string;
 	/** Metric type identifier */
-	icon: Icons;
+	statProvider: KnownStatsProviders;
 	/** SVG icon markup */
-	svg: string;
+	svg: JSX.Element;
 }
 
 /**
- * Individual metric display with handler and reactive updates
+ * Individual metric display with provider and reactive updates
  */
 export const StatsItem = (props: StatsItemProps) => {
 	const [displayData, setDisplayData] = createSignal("N/A");
 
 	createEffect(() => {
-		const HandlerClass = getHandlerClass(props.icon);
+		const StatsInformationProvider = getStatsInformationProvider(props.statProvider);
 
-		if (!HandlerClass) {
+		if (!StatsInformationProvider) {
 			setDisplayData("N/A");
 			return;
 		}
 
-		const handler = new HandlerClass({
+		const provider = new StatsInformationProvider({
 			audio: props.audio,
 			video: props.video,
 		});
 
-		handler.setup({ setDisplayData });
+		provider.setup({ setDisplayData });
 
 		onCleanup(() => {
-			handler.cleanup();
+			provider.cleanup();
 		});
 	});
 
 	return (
-		<div class={`stats__item stats__item--${props.icon}`}>
+		<div class={`stats__item stats__item--${props.statProvider}`}>
 			<div class="stats__icon-wrapper">
-				<div class="stats__icon" innerHTML={props.svg} />
+				<div class="stats__icon">{props.svg}</div>
 			</div>
-
 			<div class="stats__item-detail">
-				<span class="stats__item-text">{props.icon}</span>
+				<span class="stats__item-text">{props.statProvider}</span>
 				<span class="stats__item-data">{displayData()}</span>
 			</div>
 		</div>

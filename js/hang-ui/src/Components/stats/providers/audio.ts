@@ -1,27 +1,25 @@
-import type { HandlerContext } from "../types";
-import { BaseHandler } from "./base";
+import type { ProviderContext } from "../types";
+import { BaseProvider } from "./base";
 
 /**
- * Handler for audio stream metrics (channels, bitrate, codec)
+ * Provider for audio stream metrics (channels, bitrate, codec)
  */
-export class AudioHandler extends BaseHandler {
+export class AudioProvider extends BaseProvider {
 	/** Polling interval in milliseconds */
 	private static readonly POLLING_INTERVAL_MS = 250;
 	/** Display context for updating metrics */
-	private context: HandlerContext | undefined;
+	private context: ProviderContext | undefined;
 	/** Polling interval ID */
 	private updateInterval: number | undefined;
-	/** Bound callback for display updates */
-	private updateDisplay = () => this.updateDisplayData();
 	/** Previous bytes received for bitrate calculation */
 	private previousBytesReceived = 0;
 	/** Previous timestamp for accurate elapsed time calculation */
 	private previousWhen = 0;
 
 	/**
-	 * Initialize audio handler with polling interval
+	 * Initialize audio provider with polling interval
 	 */
-	setup(context: HandlerContext): void {
+	setup(context: ProviderContext): void {
 		this.context = context;
 		const audio = this.props.audio;
 
@@ -30,7 +28,7 @@ export class AudioHandler extends BaseHandler {
 			return;
 		}
 
-		this.updateInterval = window.setInterval(this.updateDisplay, AudioHandler.POLLING_INTERVAL_MS);
+		this.updateInterval = window.setInterval(this.updateDisplayData.bind(this), AudioProvider.POLLING_INTERVAL_MS);
 
 		this.previousWhen = performance.now();
 		this.updateDisplayData();

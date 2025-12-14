@@ -1,49 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { HandlerContext, HandlerProps, VideoSource, VideoStats } from "../types";
-import { VideoHandler } from "./video";
+import { VideoProvider } from "../../providers/video";
+import type { ProviderContext, ProviderProps, VideoSource, VideoStats } from "../../types";
+import { createMockProviderProps } from "../utils";
 
 declare global {
 	var __advanceTime: (ms: number) => void;
 }
 
-describe("VideoHandler", () => {
-	let handler: VideoHandler;
-	let context: HandlerContext;
+describe("VideoProvider", () => {
+	let provider: VideoProvider;
+	let context: ProviderContext;
 	let setDisplayData: ReturnType<typeof vi.fn>;
 	let intervalCallback: ((interval: number) => void) | null = null;
-
-	/**
-	 * Helper to create a complete VideoSource mock with all required properties
-	 */
-	const createVideoSourceMock = (overrides?: Partial<VideoSource["source"]>): VideoSource => ({
-		source: {
-			display: {
-				peek: () => ({ width: 1920, height: 1080 }),
-				subscribe: vi.fn(() => vi.fn()),
-				...overrides?.display,
-			},
-			syncStatus: {
-				peek: () => ({ state: "ready" }),
-				subscribe: vi.fn(() => vi.fn()),
-				...overrides?.syncStatus,
-			},
-			bufferStatus: {
-				peek: () => ({ state: "filled" }),
-				subscribe: vi.fn(() => vi.fn()),
-				...overrides?.bufferStatus,
-			},
-			latency: {
-				peek: () => 100,
-				subscribe: vi.fn(() => vi.fn()),
-				...overrides?.latency,
-			},
-			stats: {
-				peek: () => ({ frameCount: 0, timestamp: 0, bytesReceived: 0 }) as VideoStats,
-				subscribe: vi.fn(() => vi.fn()),
-				...overrides?.stats,
-			},
-		},
-	});
 
 	beforeEach(() => {
 		setDisplayData = vi.fn();
@@ -76,47 +44,51 @@ describe("VideoHandler", () => {
 	});
 
 	afterEach(() => {
-		handler?.cleanup();
+		provider?.cleanup();
 	});
 
 	it("should display N/A when video source is not available", () => {
-		const props: HandlerProps = {};
-		handler = new VideoHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = {};
+		provider = new VideoProvider(props);
+		provider.setup(context);
 
 		expect(setDisplayData).toHaveBeenCalledWith("N/A");
 	});
 
 	it("should setup interval for display updates", () => {
-		const video = createVideoSourceMock();
+		const mockProps = createMockProviderProps({ audio: false });
+		const video = mockProps.video as VideoSource;
 
-		const props: HandlerProps = { video };
-		handler = new VideoHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = { video };
+		provider = new VideoProvider(props);
+		provider.setup(context);
 
 		expect(setDisplayData).toHaveBeenCalled();
 	});
 
 	it("should display video resolution with stats placeholder on first call", () => {
-		const video = createVideoSourceMock();
+		const mockProps = createMockProviderProps({ audio: false });
+		const video = mockProps.video as VideoSource;
 
-		const props: HandlerProps = { video };
-		handler = new VideoHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = { video };
+		provider = new VideoProvider(props);
+		provider.setup(context);
 
 		expect(setDisplayData).toHaveBeenCalledWith("1920x1080\nN/A\nN/A");
 	});
 
 	it("should calculate FPS from frame count and timestamp delta", () => {
 		const peekFn = vi.fn();
-		const video = createVideoSourceMock({ stats: { peek: peekFn, subscribe: vi.fn(() => vi.fn()) } });
+		const mockProps = createMockProviderProps({ audio: false });
+		const video = mockProps.video as VideoSource;
+		video.source.stats.peek = peekFn;
 
-		const props: HandlerProps = { video };
-		handler = new VideoHandler(props);
+		const props: ProviderProps = { video };
+		provider = new VideoProvider(props);
 
 		// First call - use non-zero timestamp so next call can calculate FPS
 		peekFn.mockReturnValue({ frameCount: 100, timestamp: 1000000, bytesReceived: 50000 } as VideoStats);
-		handler.setup(context);
+		provider.setup(context);
 		expect(setDisplayData).toHaveBeenCalledWith("1920x1080\nN/A\nN/A");
 
 		// Second call: 6 frames in 250ms at 24fps = exactly 24 frames per second
@@ -134,17 +106,17 @@ describe("VideoHandler", () => {
 
 	it("should calculate bitrate from bytesReceived delta", () => {
 		const peekFn = vi.fn();
-		const video = createVideoSourceMock({
-			display: { peek: () => ({ width: 1280, height: 720 }), subscribe: vi.fn(() => vi.fn()) },
-			stats: { peek: peekFn, subscribe: vi.fn(() => vi.fn()) },
-		});
+		const mockProps = createMockProviderProps({ audio: false });
+		const video = mockProps.video as VideoSource;
+		video.source.display.peek = () => ({ width: 1280, height: 720 });
+		video.source.stats.peek = peekFn;
 
-		const props: HandlerProps = { video };
-		handler = new VideoHandler(props);
+		const props: ProviderProps = { video };
+		provider = new VideoProvider(props);
 
 		// First call - use non-zero initial values
 		peekFn.mockReturnValue({ frameCount: 0, timestamp: 1000000, bytesReceived: 100000 } as VideoStats);
-		handler.setup(context);
+		provider.setup(context);
 
 		// Second call: 5 Mbps = 156250 bytes delta at 250ms
 		// (156250 * 8 * 4) / 1_000_000 = 5.0 Mbps
@@ -156,41 +128,37 @@ describe("VideoHandler", () => {
 	});
 
 	it("should display N/A for FPS and bitrate on first call", () => {
-		const _video = createVideoSourceMock();
-
-		const props: HandlerProps = {};
-		handler = new VideoHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = {};
+		provider = new VideoProvider(props);
+		provider.setup(context);
 
 		expect(setDisplayData).toHaveBeenCalledWith("N/A");
 	});
 
 	it("should display only resolution when stats are not available", () => {
-		const video = createVideoSourceMock({
-			display: { peek: () => ({ width: 1280, height: 720 }), subscribe: vi.fn(() => vi.fn()) },
-			stats: { peek: () => undefined, subscribe: vi.fn(() => vi.fn()) },
-		});
+		const mockProps = createMockProviderProps({ audio: false });
+		const video = mockProps.video as VideoSource;
+		video.source.display.peek = () => ({ width: 1280, height: 720 });
+		video.source.stats.peek = () => undefined;
 
-		const props: HandlerProps = { video };
-		handler = new VideoHandler(props);
-		handler.setup(context);
-
+		const props: ProviderProps = { video };
+		provider = new VideoProvider(props);
+		provider.setup(context);
 		expect(setDisplayData).toHaveBeenCalledWith("1280x720\nN/A\nN/A");
 	});
 
 	it("should format kbps for lower bitrates", () => {
 		const peekFn = vi.fn();
-		const video = createVideoSourceMock({
-			display: { peek: () => ({ width: 1920, height: 1080 }), subscribe: vi.fn(() => vi.fn()) },
-			stats: { peek: peekFn, subscribe: vi.fn(() => vi.fn()) },
-		});
+		const mockProps = createMockProviderProps({ audio: false });
+		const video = mockProps.video as VideoSource;
+		video.source.stats.peek = peekFn;
 
-		const props: HandlerProps = { video };
-		handler = new VideoHandler(props);
+		const props: ProviderProps = { video };
+		provider = new VideoProvider(props);
 
 		// First call - use non-zero initial timestamp
 		peekFn.mockReturnValue({ frameCount: 0, timestamp: 1000000, bytesReceived: 100000 } as VideoStats);
-		handler.setup(context);
+		provider.setup(context);
 
 		// 256 kbps = 8000 bytes at 250ms
 		// (8000 * 8 * 4) / 1000 = 256 kbps
@@ -202,12 +170,12 @@ describe("VideoHandler", () => {
 	});
 
 	it("should cleanup interval on dispose", () => {
-		const props: HandlerProps = {};
-		handler = new VideoHandler(props);
-		handler.setup(context);
+		const props: ProviderProps = {};
+		provider = new VideoProvider(props);
+		provider.setup(context);
 
-		handler.cleanup();
+		provider.cleanup();
 
-		expect(handler).toBeDefined();
+		expect(provider).toBeDefined();
 	});
 });

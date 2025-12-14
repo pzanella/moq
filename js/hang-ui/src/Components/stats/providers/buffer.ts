@@ -1,18 +1,18 @@
 import type { Getter } from "@moq/signals";
-import type { BufferStatus, HandlerContext, SyncStatus } from "../types";
-import { BaseHandler } from "./base";
+import type { BufferStatus, ProviderContext, SyncStatus } from "../types";
+import { BaseProvider } from "./base";
 
 /**
- * Handler for buffer metrics (fill percentage, latency)
+ * Provider for buffer metrics (fill percentage, latency)
  */
-export class BufferHandler extends BaseHandler {
+export class BufferProvider extends BaseProvider {
 	/** Display context for updating metrics */
-	private context: HandlerContext | undefined;
+	private context: ProviderContext | undefined;
 
 	/**
-	 * Initialize buffer handler with signal subscriptions
+	 * Initialize buffer provider with signal subscriptions
 	 */
-	setup(context: HandlerContext): void {
+	setup(context: ProviderContext): void {
 		this.context = context;
 		const video = this.props.video;
 

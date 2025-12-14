@@ -1,12 +1,12 @@
 import { type Context, Show, useContext } from "solid-js";
 import { StatsWrapper } from "./components/StatsWrapper";
 import { StatsContext } from "./context";
-import styles from "./style/index.scss?inline";
-import type { HandlerProps } from "./types";
+import styles from "./style.css?inline";
+import type { ProviderProps } from "./types";
 
 interface StatsProps<T = unknown> {
 	context: Context<T>;
-	getElement: (ctx: T) => HandlerProps | undefined;
+	getElement: (ctx: T) => ProviderProps | undefined;
 }
 
 /**
@@ -17,20 +17,20 @@ export const Stats = <T = unknown>(props: StatsProps<T>) => {
 	const contextValue = useContext(props.context);
 
 	return (
-		<div class="stats">
-			<style>{styles}</style>
-			<Show when={props.getElement(contextValue)}>
-				{(element) => (
+		<Show when={props.getElement(contextValue)}>
+			{(_element) => (
+				<div class="stats">
+					<style>{styles}</style>
 					<StatsContext.Provider
 						value={{
-							audio: element().audio,
-							video: element().video,
+							audio: _element().audio,
+							video: _element().video,
 						}}
 					>
 						<StatsWrapper />
 					</StatsContext.Provider>
-				)}
-			</Show>
-		</div>
+				</div>
+			)}
+		</Show>
 	);
 };

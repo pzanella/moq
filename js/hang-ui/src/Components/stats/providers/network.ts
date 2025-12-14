@@ -1,5 +1,5 @@
-import type { HandlerContext } from "../types";
-import { BaseHandler } from "./base";
+import type { ProviderContext } from "../types";
+import { BaseProvider } from "./base";
 
 /**
  * Extended Navigator interface with connection property
@@ -34,39 +34,41 @@ interface NetworkInformation {
 }
 
 /**
- * Handler for network metrics (connection type, bandwidth, latency)
+ * Provider for network metrics (connection type, bandwidth, latency)
  */
-export class NetworkHandler extends BaseHandler {
+export class NetworkProvider extends BaseProvider {
 	/** Polling interval in milliseconds */
 	private static readonly POLLING_INTERVAL_MS = 100;
 	/** Display context for updating metrics */
-	private context: HandlerContext | undefined;
+	private context: ProviderContext | undefined;
 	/** Network information from navigator.connection */
 	private networkInfo?: NetworkInformation;
 	/** Polling interval ID */
 	private updateInterval?: number;
-	/** Bound callback for display updates */
-	private updateDisplay = () => this.updateDisplayData();
-	/** Bound callback for online/offline changes */
-	private onlineStatusChanged = () => this.updateDisplayData();
 
 	/**
-	 * Initialize network handler with connection listeners
+	 * Initialize network provider with connection listeners
 	 */
-	setup(context: HandlerContext): void {
+	setup(context: ProviderContext): void {
 		this.context = context;
 
 		const nav = navigator as NavigatorWithConnection;
 		this.networkInfo = nav.connection ?? nav.mozConnection ?? nav.webkitConnection;
 
-		if (this.networkInfo?.addEventListener) {
-			this.networkInfo.addEventListener("change", this.updateDisplay);
+		if (!this.networkInfo) {
+			context.setDisplayData("N/A");
+			return;
 		}
 
-		window.addEventListener("online", this.onlineStatusChanged);
-		window.addEventListener("offline", this.onlineStatusChanged);
+		this.networkInfo.addEventListener?.("change", this.updateDisplayData.bind(this));
 
-		this.updateInterval = window.setInterval(this.updateDisplay, NetworkHandler.POLLING_INTERVAL_MS);
+		window.addEventListener("online", this.updateDisplayData.bind(this));
+		window.addEventListener("offline", this.updateDisplayData.bind(this));
+
+		this.updateInterval = window.setInterval(
+			this.updateDisplayData.bind(this),
+			NetworkProvider.POLLING_INTERVAL_MS,
+		);
 		this.updateDisplayData();
 	}
 
@@ -75,10 +77,10 @@ export class NetworkHandler extends BaseHandler {
 	 */
 	override cleanup(): void {
 		if (this.networkInfo?.removeEventListener) {
-			this.networkInfo.removeEventListener("change", this.updateDisplay);
+			this.networkInfo.removeEventListener("change", this.updateDisplayData.bind(this));
 		}
-		window.removeEventListener("online", this.onlineStatusChanged);
-		window.removeEventListener("offline", this.onlineStatusChanged);
+		window.removeEventListener("online", this.updateDisplayData.bind(this));
+		window.removeEventListener("offline", this.updateDisplayData.bind(this));
 		if (this.updateInterval !== undefined) {
 			clearInterval(this.updateInterval);
 		}

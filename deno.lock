@@ -64,7 +64,6 @@
             "npm:rimraf@^6.0.1",
             "npm:rollup-plugin-esbuild@^6.2.1",
             "npm:rollup@^4.53.3",
-            "npm:sass@^1.70.0",
             "npm:solid-element@^1.9.1",
             "npm:solid-js@^1.9.10",
             "npm:unplugin-solid@1",

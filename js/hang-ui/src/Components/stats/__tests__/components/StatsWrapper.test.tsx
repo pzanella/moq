@@ -1,28 +1,29 @@
 import { render } from "solid-js/web";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { createMockProviderProps } from "../../__tests__/utils";
+import { StatsWrapper } from "../../components/StatsWrapper";
 import { StatsContext } from "../../context";
-import type { HandlerProps } from "../../types";
-import { StatsWrapper } from "../StatsWrapper";
-
-const mockAudioVideo: HandlerProps = {
-	audio: { source: { active: { peek: () => "audio-data" } } },
-	video: { source: { display: { peek: () => ({ width: 1920, height: 1080 }) } } },
-};
+import type { ProviderProps } from "../../types";
 
 describe("StatsWrapper", () => {
 	let container: HTMLDivElement;
+	let mockAudioVideo: ProviderProps;
+	let dispose: (() => void) | undefined;
 
 	beforeEach(() => {
 		container = document.createElement("div");
 		document.body.appendChild(container);
+		mockAudioVideo = createMockProviderProps();
 	});
 
 	afterEach(() => {
+		dispose?.();
+		dispose = undefined;
 		document.body.removeChild(container);
 	});
 
 	it("renders with wrapper class", () => {
-		render(
+		dispose = render(
 			() => (
 				<StatsContext.Provider value={mockAudioVideo}>
 					<StatsWrapper />
@@ -36,7 +37,7 @@ describe("StatsWrapper", () => {
 	});
 
 	it("renders button component", () => {
-		render(
+		dispose = render(
 			() => (
 				<StatsContext.Provider value={mockAudioVideo}>
 					<StatsWrapper />
@@ -50,7 +51,7 @@ describe("StatsWrapper", () => {
 	});
 
 	it("initially hides stats panel", () => {
-		render(
+		dispose = render(
 			() => (
 				<StatsContext.Provider value={mockAudioVideo}>
 					<StatsWrapper />
@@ -64,7 +65,7 @@ describe("StatsWrapper", () => {
 	});
 
 	it("has button with correct aria attributes", () => {
-		render(
+		dispose = render(
 			() => (
 				<StatsContext.Provider value={mockAudioVideo}>
 					<StatsWrapper />
@@ -79,7 +80,7 @@ describe("StatsWrapper", () => {
 	});
 
 	it("button has correct accessibility attributes", () => {
-		render(
+		dispose = render(
 			() => (
 				<StatsContext.Provider value={mockAudioVideo}>
 					<StatsWrapper />
@@ -94,7 +95,7 @@ describe("StatsWrapper", () => {
 	});
 
 	it("renders with correct structure", () => {
-		render(
+		dispose = render(
 			() => (
 				<StatsContext.Provider value={mockAudioVideo}>
 					<StatsWrapper />
@@ -111,7 +112,7 @@ describe("StatsWrapper", () => {
 	});
 
 	it("button is clickable", () => {
-		render(
+		dispose = render(
 			() => (
 				<StatsContext.Provider value={mockAudioVideo}>
 					<StatsWrapper />
