@@ -1,6 +1,5 @@
 import { type Context, Show, useContext } from "solid-js";
-import { StatsWrapper } from "./components/StatsWrapper";
-import { StatsContext } from "./context";
+import { StatsPanel } from "./components/StatsPanel";
 import styles from "./style.css?inline";
 import type { ProviderProps } from "./types";
 
@@ -21,14 +20,7 @@ export const Stats = <T = unknown>(props: StatsProps<T>) => {
 			{(_element) => (
 				<div class="stats">
 					<style>{styles}</style>
-					<StatsContext.Provider
-						value={{
-							audio: _element().audio,
-							video: _element().video,
-						}}
-					>
-						<StatsWrapper />
-					</StatsContext.Provider>
+					<StatsPanel audio={_element().audio} video={_element().video} />
 				</div>
 			)}
 		</Show>

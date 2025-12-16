@@ -45,7 +45,7 @@ export const StatsItem = (props: StatsItemProps) => {
 				<div class="stats__icon">{props.svg}</div>
 			</div>
 			<div class="stats__item-detail">
-				<span class="stats__item-text">{props.statProvider}</span>
+				<span class="stats__item-title">{props.statProvider}</span>
 				<span class="stats__item-data">{displayData()}</span>
 			</div>
 		</div>

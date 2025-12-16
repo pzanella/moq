@@ -1,7 +1,6 @@
 import { render } from "solid-js/web";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { statsDetailItems } from "../../components/icons";
-import { StatsPanel } from "../../components/StatsPanel";
+import { StatsPanel, statsDetailItems } from "../../components/StatsPanel";
 import type { ProviderProps } from "../../types";
 import { createMockProviderProps } from "../utils";
 

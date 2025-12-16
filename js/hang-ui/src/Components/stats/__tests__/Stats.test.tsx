@@ -53,16 +53,16 @@ describe("Stats Component", () => {
 			);
 		}, container);
 
-		// Initially no StatsWrapper should be rendered
-		let wrapper = container.querySelector(".stats__wrapper");
-		expect(wrapper).toBeFalsy();
+		// Initially no StatsPanel should be rendered
+		let panel = container.querySelector(".stats__panel");
+		expect(panel).toBeFalsy();
 
 		// Wait for setTimeout to trigger
 		await new Promise((resolve) => setTimeout(resolve, 150));
 
-		// Now wrapper should be rendered
-		wrapper = container.querySelector(".stats__wrapper");
-		expect(wrapper).toBeTruthy();
+		// Now panel should be rendered
+		panel = container.querySelector(".stats__panel");
+		expect(panel).toBeTruthy();
 	});
 
 	it("only renders when both audio and video are available", async () => {
@@ -86,13 +86,13 @@ describe("Stats Component", () => {
 			);
 		}, container);
 
-		let wrapper = container.querySelector(".stats__wrapper");
+		let panel = container.querySelector(".stats__panel");
 
 		// Wait for setTimeout to trigger
 		await new Promise((resolve) => setTimeout(resolve, 150));
 
-		wrapper = container.querySelector(".stats__wrapper");
-		expect(wrapper).toBeTruthy();
+		panel = container.querySelector(".stats__panel");
+		expect(panel).toBeTruthy();
 	});
 
 	it("works with different context types", () => {
@@ -118,8 +118,8 @@ describe("Stats Component", () => {
 		const stats = container.querySelector(".stats");
 		expect(stats).toBeTruthy();
 
-		const wrapper = container.querySelector(".stats__wrapper");
-		expect(wrapper).toBeTruthy();
+		const panel = container.querySelector(".stats__panel");
+		expect(panel).toBeTruthy();
 	});
 
 	it("applies styles inline", () => {
@@ -152,8 +152,8 @@ describe("Stats Component", () => {
 			container,
 		);
 
-		const wrapper = container.querySelector(".stats__wrapper");
-		expect(wrapper).toBeTruthy();
+		const panel = container.querySelector(".stats__panel");
+		expect(panel).toBeTruthy();
 	});
 
 	it("handles undefined context gracefully", () => {
@@ -169,12 +169,9 @@ describe("Stats Component", () => {
 			container,
 		);
 
-		// Should not render stats or wrapper when element is undefined
-		const stats = container.querySelector(".stats");
-		expect(stats).toBeFalsy();
-
-		const wrapper = container.querySelector(".stats__wrapper");
-		expect(wrapper).toBeFalsy();
+		// Should not render panel when element is undefined
+		const panel = container.querySelector(".stats__panel");
+		expect(panel).toBeFalsy();
 	});
 
 	it("updates when context changes", async () => {
@@ -194,14 +191,14 @@ describe("Stats Component", () => {
 			);
 		}, container);
 
-		let wrapper = container.querySelector(".stats__wrapper");
-		expect(wrapper).toBeFalsy();
+		let panel = container.querySelector(".stats__panel");
+		expect(panel).toBeFalsy();
 
 		// Wait for setTimeout to trigger
 		await new Promise((resolve) => setTimeout(resolve, 150));
 
-		wrapper = container.querySelector(".stats__wrapper");
-		expect(wrapper).toBeTruthy();
+		panel = container.querySelector(".stats__panel");
+		expect(panel).toBeTruthy();
 	});
 
 	it("rerenders when getElement function returns different values", async () => {
@@ -226,13 +223,13 @@ describe("Stats Component", () => {
 			);
 		}, container);
 
-		let wrapper = container.querySelector(".stats__wrapper");
-		expect(wrapper).toBeTruthy();
+		let panel = container.querySelector(".stats__panel");
+		expect(panel).toBeTruthy();
 
 		// Wait for setTimeout to trigger
 		await new Promise((resolve) => setTimeout(resolve, 150));
 
-		wrapper = container.querySelector(".stats__wrapper");
-		expect(wrapper).toBeTruthy();
+		panel = container.querySelector(".stats__panel");
+		expect(panel).toBeTruthy();
 	});
 });

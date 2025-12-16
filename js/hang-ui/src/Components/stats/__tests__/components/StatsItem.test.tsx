@@ -33,7 +33,20 @@ describe("StatsItem", () => {
 		vi.mocked(registry.getStatsInformationProvider).mockReturnValue(undefined);
 
 		dispose = render(
-			() => <StatsItem name="Network" statProvider="network" svg="<svg><circle r='5'></circle></svg>" />,
+			() => (
+				<StatsItem
+					name="Network"
+					statProvider="network"
+					svg={
+						<svg>
+							<title>Title</title>
+							<circle r="5"></circle>
+						</svg>
+					}
+					audio={mockAudioVideo.audio}
+					video={mockAudioVideo.video}
+				/>
+			),
 			container,
 		);
 
@@ -45,29 +58,76 @@ describe("StatsItem", () => {
 	it("renders icon wrapper with SVG content", () => {
 		vi.mocked(registry.getStatsInformationProvider).mockReturnValue(undefined);
 
-		const testSvg = '<svg><circle r="5"></circle></svg>';
-		dispose = render(() => <StatsItem name="Video" statProvider="video" svg={testSvg} />, container);
+		const testSvg = () => (
+			<svg data-testid="test-icon">
+				<title>Title</title>
+				<circle r="5"></circle>
+			</svg>
+		);
+
+		dispose = render(
+			() => (
+				<StatsItem
+					name="Video"
+					statProvider="video"
+					svg={testSvg()}
+					audio={mockAudioVideo.audio}
+					video={mockAudioVideo.video}
+				/>
+			),
+			container,
+		);
 
 		const iconWrapper = container.querySelector(".stats__icon-wrapper");
 		expect(iconWrapper).toBeTruthy();
 
-		const icon = container.querySelector(".stats__icon");
-		expect(icon?.innerHTML).toBe(testSvg);
+		const icon = container.querySelector(".stats__icon svg[data-testid='test-icon']");
+		expect(icon).toBeTruthy();
 	});
 
 	it("renders item detail with icon text", () => {
 		vi.mocked(registry.getStatsInformationProvider).mockReturnValue(undefined);
 
-		dispose = render(() => <StatsItem name="Audio" statProvider="audio" svg="<svg></svg>" />, container);
+		dispose = render(
+			() => (
+				<StatsItem
+					name="Audio"
+					statProvider="audio"
+					svg={
+						<svg>
+							<title>Title</title>
+						</svg>
+					}
+					audio={mockAudioVideo.audio}
+					video={mockAudioVideo.video}
+				/>
+			),
+			container,
+		);
 
-		const iconText = container.querySelector(".stats__item-text");
+		const iconText = container.querySelector(".stats__item-title");
 		expect(iconText?.textContent).toBe("audio");
 	});
 
 	it("displays N/A when no provider is available", () => {
 		vi.mocked(registry.getStatsInformationProvider).mockReturnValue(undefined);
 
-		dispose = render(() => <StatsItem name="Buffer" statProvider="buffer" svg="<svg></svg>" />, container);
+		dispose = render(
+			() => (
+				<StatsItem
+					name="Buffer"
+					statProvider="buffer"
+					svg={
+						<svg>
+							<title>Title</title>
+						</svg>
+					}
+					audio={mockAudioVideo.audio}
+					video={mockAudioVideo.video}
+				/>
+			),
+			container,
+		);
 
 		const dataDisplay = container.querySelector(".stats__item-data");
 		expect(dataDisplay?.textContent).toBe("N/A");
@@ -89,7 +149,11 @@ describe("StatsItem", () => {
 				<StatsItem
 					name="Network"
 					statProvider="network"
-					svg="<svg></svg>"
+					svg={
+						<svg>
+							<title>Title</title>
+						</svg>
+					}
 					audio={mockAudioVideo.audio}
 					video={mockAudioVideo.video}
 				/>
@@ -116,7 +180,11 @@ describe("StatsItem", () => {
 				<StatsItem
 					name="Video"
 					statProvider="video"
-					svg="<svg></svg>"
+					svg={
+						<svg>
+							<title>Title</title>
+						</svg>
+					}
 					audio={mockAudioVideo.audio}
 					video={mockAudioVideo.video}
 				/>
@@ -151,7 +219,11 @@ describe("StatsItem", () => {
 				<StatsItem
 					name="Audio"
 					statProvider="audio"
-					svg="<svg></svg>"
+					svg={
+						<svg>
+							<title>Title</title>
+						</svg>
+					}
 					audio={mockAudioVideo.audio}
 					video={mockAudioVideo.video}
 				/>
@@ -181,7 +253,13 @@ describe("StatsItem", () => {
 					<StatsItem
 						name={provider.charAt(0).toUpperCase() + provider.slice(1)}
 						statProvider={provider}
-						svg="<svg></svg>"
+						svg={
+							<svg>
+								<title>Title</title>
+							</svg>
+						}
+						audio={mockAudioVideo.audio}
+						video={mockAudioVideo.video}
 					/>
 				),
 				testContainer,
@@ -236,7 +314,11 @@ describe("StatsItem", () => {
 				<StatsItem
 					name={statProvider().charAt(0).toUpperCase() + statProvider().slice(1)}
 					statProvider={statProvider()}
-					svg="<svg></svg>"
+					svg={
+						<svg>
+							<title>Title</title>
+						</svg>
+					}
 					audio={mockAudioVideo.audio}
 					video={mockAudioVideo.video}
 				/>
@@ -255,7 +337,22 @@ describe("StatsItem", () => {
 	it("maintains correct DOM hierarchy", () => {
 		vi.mocked(registry.getStatsInformationProvider).mockReturnValue(undefined);
 
-		dispose = render(() => <StatsItem name="Network" statProvider="network" svg="<svg></svg>" />, container);
+		dispose = render(
+			() => (
+				<StatsItem
+					name="Network"
+					statProvider="network"
+					svg={
+						<svg>
+							<title>Title</title>
+						</svg>
+					}
+					audio={mockAudioVideo.audio}
+					video={mockAudioVideo.video}
+				/>
+			),
+			container,
+		);
 
 		const item = container.querySelector(".stats__item");
 		expect(item?.children.length).toBe(2);
@@ -268,7 +365,7 @@ describe("StatsItem", () => {
 		expect(detail).toBeTruthy();
 		expect(detail?.children.length).toBe(2);
 
-		expect(detail?.querySelector(".stats__item-text")).toBeTruthy();
+		expect(detail?.querySelector(".stats__item-title")).toBeTruthy();
 		expect(detail?.querySelector(".stats__item-data")).toBeTruthy();
 	});
 
@@ -278,28 +375,5 @@ describe("StatsItem", () => {
 		dispose = render(() => <StatsItem name="Buffer" statProvider="buffer" svg="<svg></svg>" />, container);
 
 		expect(registry.getStatsInformationProvider).toHaveBeenCalledWith("buffer");
-	});
-
-	it("renders with dynamic SVG updates", async () => {
-		vi.mocked(registry.getStatsInformationProvider).mockReturnValue(undefined);
-
-		dispose = render(() => {
-			const [svg, setSvg] = createSignal("<svg><circle r='5'></circle></svg>");
-
-			// Update SVG after initial render
-			setTimeout(() => setSvg("<svg><rect width='10' height='10'></rect></svg>"), 0);
-
-			return <StatsItem name="Network" statProvider="network" svg={svg()} />;
-		}, container);
-
-		let icon = container.querySelector(".stats__icon");
-		expect(icon?.innerHTML).toContain("circle");
-
-		// Wait for setTimeout
-		await new Promise((resolve) => setTimeout(resolve, 10));
-
-		icon = container.querySelector(".stats__icon");
-		expect(icon?.innerHTML).toContain("rect");
-		expect(icon?.innerHTML).not.toContain("circle");
 	});
 });
