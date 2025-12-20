@@ -62,7 +62,6 @@ export default function WatchUIContextProvider(props: WatchUIContextProviderProp
 		} else {
 			props.hangWatch.requestFullscreen();
 		}
-		setIsFullscreen(!!document.fullscreenElement);
 	};
 
 	const setVolume = (volume: number) => {
@@ -176,6 +175,16 @@ export default function WatchUIContextProvider(props: WatchUIContextProviderProp
 			const selected = effect.get(watch.video.source.active);
 			setActiveRendition(selected);
 		});
+
+		const handleFullscreenChange = () => {
+			setIsFullscreen(!!document.fullscreenElement);
+		};
+
+		document.addEventListener("fullscreenchange", handleFullscreenChange);
+
+		return () => {
+			document.removeEventListener("fullscreenchange", handleFullscreenChange);
+		};
 	});
 
 	return <WatchUIContext.Provider value={value}>{props.children}</WatchUIContext.Provider>;
