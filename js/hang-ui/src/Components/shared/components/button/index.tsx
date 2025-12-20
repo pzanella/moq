@@ -17,7 +17,7 @@ sheet.replaceSync(`${buttonStyle}`);
  * @property {string} [ariaLabel] - Accessible label for screen readers. Falls back to title or children if not provided.
  * @property {boolean} [ariaDisabled] - Accessibility disabled state (for ARIA only).
  * @property {boolean} [disabled] - Disabled state (native HTML attribute).
- * @property {number} [tabIndex] - Tab index for keyboard navigation. Defaults to 0.
+ * @property {number} [tabIndex] - Tab index for keyboard navigation. Uses browser default (typically 0) if not set.
  */
 export type ButtonProps = {
 	type?: "button" | "submit" | "reset";
