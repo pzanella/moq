@@ -1,3 +1,7 @@
+@import "../variables.css";
+@import "../flex.css";
+@import "../button.css";
+
 .publishControlsContainer {
 	display: flex;
 	justify-content: space-around;

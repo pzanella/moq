@@ -1,10 +1,4 @@
-import { onMount } from "solid-js";
 import type { JSX } from "solid-js/jsx-runtime";
-import { useConstructableStyle } from "../../styles/utils";
-import buttonStyle from "./style.css?inline";
-
-const sheet = new CSSStyleSheet();
-sheet.replaceSync(`${buttonStyle}`);
 
 /**
  * Props for the shared Button component.
@@ -42,15 +36,8 @@ export type ButtonProps = {
  * @returns {JSX.Element} A styled, accessible button element.
  */
 export default function Button(props: ButtonProps) {
-	let buttonRef: HTMLButtonElement | undefined;
-
-	onMount(() => {
-		useConstructableStyle(buttonRef, sheet);
-	});
-
 	return (
 		<button
-			ref={buttonRef}
 			type={props.type ?? "button"}
 			title={props.title ?? "Simple button"}
 			class={`flex--center button ${props.class ? `${props.class}` : ""}`.trimEnd()}

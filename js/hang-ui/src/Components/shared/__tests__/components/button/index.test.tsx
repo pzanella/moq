@@ -1,7 +1,7 @@
 import "@testing-library/jest-dom";
 import { fireEvent, render } from "@solidjs/testing-library";
 import { describe, expect, it, vi } from "vitest";
-import Button, { type ButtonProps } from "../../components/button/index";
+import Button, { type ButtonProps } from "../../../components/button";
 
 describe("Button component", () => {
 	const defaultProps: ButtonProps = {

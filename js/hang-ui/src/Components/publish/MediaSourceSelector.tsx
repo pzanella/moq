@@ -1,43 +1,6 @@
 import { createSignal, For, Show } from "solid-js";
 import Button from "../shared/components/button";
-import type { IconSet } from "../shared/types/icons";
-
-const mediaSourceSelectorIcons: IconSet = {
-	isVisible: () => (
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="12"
-			height="12"
-			viewBox="0 0 24 24"
-			fill="var(--color-white)"
-			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			aria-hidden="true"
-		>
-			<path d="M13.73 4a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-		</svg>
-	),
-	isHidden: () => (
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			width="12"
-			height="12"
-			viewBox="0 0 24 24"
-			fill="var(--color-white)"
-			stroke="currentColor"
-			stroke-width="2"
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			aria-hidden="true"
-		>
-			<g transform="rotate(180 12 12)">
-				<path d="M13.73 4a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
-			</g>
-		</svg>
-	),
-};
+import Icon from "../shared/components/icon";
 
 type MediaSourceSelectorProps = {
 	sources?: MediaDeviceInfo[];
@@ -57,7 +20,7 @@ export default function MediaSourceSelector(props: MediaSourceSelectorProps) {
 				class="mediaSourceVisibilityToggle button--media-source-selector"
 				title={sourcesVisible() ? "Hide Sources" : "Show Sources"}
 			>
-				{sourcesVisible() ? mediaSourceSelectorIcons.isVisible() : mediaSourceSelectorIcons.isHidden()}
+				<Icon name={sourcesVisible() ? "arrow-up" : "arrow-down"} />
 			</Button>
 			<Show when={sourcesVisible()}>
 				<select

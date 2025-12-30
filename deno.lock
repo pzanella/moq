@@ -72,6 +72,7 @@
             "npm:@testing-library/jest-dom@^6.9.1",
             "npm:happy-dom@^20.0.11",
             "npm:rimraf@^6.0.1",
+            "npm:rollup-plugin-copy@^3.5.0",
             "npm:rollup-plugin-esbuild@^6.2.1",
             "npm:rollup@^4.53.3",
             "npm:solid-element@^1.9.1",
