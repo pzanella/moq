@@ -81,7 +81,7 @@ setBasePath('/public/hang-ui');
 ### Asset Structure
 When using `setBasePath`, ensure your asset directory contains the required files. The library expects the following structure in the dist folder:
 
-```
+```plaintext
 your-base-path/
 ├── assets/
 │   └── icons/

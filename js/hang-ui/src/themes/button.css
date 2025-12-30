@@ -25,5 +25,5 @@
 .button:disabled {
 	opacity: 0.5;
 	cursor: default;
-	color: var(--color-light-gray);
+	color: var(--color-gray-100);
 }

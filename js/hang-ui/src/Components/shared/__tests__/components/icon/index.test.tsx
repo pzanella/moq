@@ -8,11 +8,6 @@ describe("Icon component", () => {
 	beforeEach(() => {
 		// Set a fake base path for tests
 		setBasePath("/test-assets");
-		// Clear caches between tests
-		// @ts-expect-error: access for test
-		Icon.__iconCache?.clear?.();
-		// @ts-expect-error: access for test
-		Icon.__fetchingIcons?.clear?.();
 	});
 
 	it("renders and fetches SVG icon", async () => {

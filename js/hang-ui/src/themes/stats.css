@@ -72,20 +72,13 @@
 
 @container (width > 480px) {
 	.stats .stats__panel .stats__item .stats__icon-wrapper {
+		width: 24px;
+		height: 24px;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		flex-direction: row;
 	}
-}
-
-.stats .stats__panel .stats__item .stats__icon-wrapper {
-	width: 24px;
-	height: 24px;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-direction: row;
 }
 
 .stats .stats__panel .stats__item .stats__icon-wrapper svg {

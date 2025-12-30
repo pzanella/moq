@@ -1,5 +1,5 @@
 import { createEffect, createSignal, type JSX } from "solid-js";
-import { getBasePath } from "../../../../utilities";
+import { getBasePath, whenBasePathReady } from "../../../../utilities";
 
 /**
  * Props for the Icon component.
@@ -60,6 +60,7 @@ export default function Icon(props: IconProps): JSX.Element {
 		if (!fetchPromise) {
 			// Start a new fetch for the icon SVG
 			fetchPromise = (async () => {
+				await whenBasePathReady();
 				const iconPath = getBasePath(`assets/icons/${iconName}.svg`);
 				const response = await fetch(iconPath);
 
