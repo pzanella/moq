@@ -21,7 +21,6 @@ export default defineConfig({
 		hmr: false,
 	},
 	optimizeDeps: {
-		include: ["@moq/hang-ui"],
 		exclude: ["@libav.js/variant-opus-af"],
 	},
 });
