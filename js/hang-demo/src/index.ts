@@ -1,10 +1,4 @@
-import { setBasePath } from "@moq/hang-ui/settings";
 import "./highlight";
-
-// Set basePath for hang-ui assets
-// These need to be copied out of node_modules and served via a public endpoint
-setBasePath("/@moq/hang-ui");
-
 import "@moq/hang-ui/watch/element";
 import HangSupport from "@moq/hang/support/element";
 import HangWatch from "@moq/hang/watch/element";

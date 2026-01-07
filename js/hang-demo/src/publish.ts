@@ -1,9 +1,4 @@
-import { setBasePath } from "@moq/hang-ui/settings";
 import "./highlight";
-
-// Set basePath for hang-ui assets
-setBasePath("/@moq/hang-ui");
-
 import "@moq/hang-ui/publish/element";
 
 // We need to import Web Components with fully-qualified paths because of tree-shaking.

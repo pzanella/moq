@@ -1,56 +1,39 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
+import { readFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import nodeResolve from "@rollup/plugin-node-resolve";
-import cssnano from "cssnano";
-import { globSync } from "glob";
-import postcss from "postcss";
-import postcssImport from "postcss-import";
 import esbuild from "rollup-plugin-esbuild";
-import { optimize as optimizeSvg } from "svgo";
 import solid from "unplugin-solid/rollup";
 
-// Plugin to bundle and minify CSS, and optimize SVGs
-function processAssets() {
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Plugin to handle ?inline and ?raw imports
+function inlineAssets() {
 	return {
-		name: "process-assets",
-		async writeBundle() {
-			// Process CSS files - bundle @imports and minify
-			const cssFiles = globSync("src/assets/styles/**/*.css");
-			for (const file of cssFiles) {
-				const content = readFileSync(file, "utf8");
-				const result = await postcss([
-					postcssImport({
-						path: [dirname(file)], // Resolve @imports relative to the file
-					}),
-					cssnano({ preset: "default" }),
-				]).process(content, {
-					from: file,
-				});
-
-				const outPath = file.replace("src/assets/", "dist/assets/");
-				mkdirSync(dirname(outPath), { recursive: true });
-				writeFileSync(outPath, result.css);
+		name: "inline-assets",
+		resolveId(source, importer) {
+			if (source.includes("?inline") || source.includes("?raw")) {
+				const [path, query] = source.split("?");
+				// Resolve relative to importer
+				const resolved = importer ? resolve(dirname(importer), path) : resolve(__dirname, path);
+				return `${resolved}?${query}`;
 			}
-
-			// Process SVG files - optimize
-			const svgFiles = globSync("src/assets/icons/**/*.svg");
-			for (const file of svgFiles) {
-				const content = readFileSync(file, "utf8");
-				const result = optimizeSvg(content, {
-					multipass: true,
-					plugins: ["preset-default", { name: "removeViewBox", active: false }],
-				});
-
-				const outPath = file.replace("src/assets/", "dist/assets/");
-				mkdirSync(dirname(outPath), { recursive: true });
-				writeFileSync(outPath, result.data);
+			return null;
+		},
+		load(id) {
+			if (id.includes("?inline") || id.includes("?raw")) {
+				const realPath = id.split("?")[0];
+				const content = readFileSync(realPath, "utf8");
+				return `export default ${JSON.stringify(content)};`;
 			}
+			return null;
 		},
 	};
 }
 
 // Shared plugins for Solid components
 const solidPlugins = [
+	inlineAssets(),
 	solid({ dev: false, hydratable: false }),
 	esbuild({
 		include: /\.[jt]sx?$/,
@@ -62,6 +45,7 @@ const solidPlugins = [
 
 // Simple esbuild plugin for non-Solid files
 const simplePlugins = [
+	inlineAssets(),
 	esbuild({
 		include: /\.[jt]s$/,
 		tsconfig: "tsconfig.json",
@@ -83,7 +67,7 @@ export default [
 	{
 		input: "src/utilities/index.ts",
 		output: { file: "dist/utilities/index.js", format: "es" },
-		plugins: [...simplePlugins, processAssets()],
+		plugins: simplePlugins,
 	},
 	{
 		input: "src/Components/publish/element.tsx",
