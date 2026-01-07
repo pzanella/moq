@@ -6,14 +6,14 @@
 	"license": "(MIT OR Apache-2.0)",
 	"repository": "github:moq-dev/moq",
 	"exports": {
-		"./publish": "./src/publish/index.tsx",
-		"./watch": "./src/watch/index.tsx",
-		"./stats": "./src/stats/index.tsx"
+		"./publish/element": "./src/Components/publish/index.tsx",
+		"./watch/element": "./src/Components/watch/index.tsx",
+		"./stats": "./src/Components/stats/index.tsx"
 	},
 	"sideEffects": [
-		"./src/publish/index.tsx",
-		"./src/watch/index.tsx",
-		"./src/stats/index.tsx"
+		"./src/Components/publish/element.tsx",
+		"./src/Components/watch/element.tsx",
+		"./src/Components/stats/element.ts"
 	],
 	"scripts": {
 		"build": "bun run clean && vite build && bun ../scripts/package.ts",
