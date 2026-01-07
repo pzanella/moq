@@ -1,7 +1,7 @@
 import "./highlight";
-import { setBasePath } from "@moq/hang-ui/utilities";
+import { Settings } from "@moq/hang-ui";
 
-setBasePath(__HANG_UI_ASSETS_PATH__);
+Settings.setBasePath(__HANG_UI_ASSETS_PATH__);
 
 import "@moq/hang-ui/publish/element";
 

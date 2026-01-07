@@ -1,4 +1,4 @@
-import { getBasePath, whenBasePathReady } from "./basePath";
+import * as Settings from "../settings";
 
 /**
  * Loads a CSS file from the resolved base path and injects it as a <link rel="stylesheet"> into the given shadow root or element.
@@ -10,10 +10,10 @@ import { getBasePath, whenBasePathReady } from "./basePath";
  */
 export async function loadStyleIntoShadow(subpath: string, shadowRoot: ShadowRoot | HTMLElement): Promise<void> {
 	// Wait for basePath to be set before resolving the path
-	await whenBasePathReady();
+	await Settings.whenBasePathReady();
 
 	// Now resolve the full path with the basePath
-	const href = getBasePath(subpath);
+	const href = Settings.getBasePath(subpath);
 
 	// Check if already loaded in this shadow root
 	if (shadowRoot.querySelector(`link[href="${href}"]`)) {

@@ -1,13 +1,13 @@
 import "@testing-library/jest-dom";
 import { render, waitFor } from "@solidjs/testing-library";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { setBasePath } from "../../../../../utilities";
+import * as Settings from "../../../../../settings";
 import Icon from "../../../../shared/components/icon";
 
 describe("Icon component", () => {
 	beforeEach(() => {
 		// Set a fake base path for tests
-		setBasePath("/test-assets");
+		Settings.setBasePath("/test-assets");
 	});
 
 	it("renders and fetches SVG icon", async () => {

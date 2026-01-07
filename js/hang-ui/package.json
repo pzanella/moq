@@ -6,10 +6,11 @@
 	"license": "(MIT OR Apache-2.0)",
 	"repository": "github:moq-dev/moq",
 	"exports": {
+		".": "./src/index.ts",
+		"./settings": "./src/settings.ts",
 		"./publish/element": "./src/Components/publish/element.tsx",
 		"./watch/element": "./src/Components/watch/element.tsx",
-		"./stats": "./src/Components/stats/index.ts",
-		"./utilities": "./src/utilities/index.ts"
+		"./stats": "./src/Components/stats/index.ts"
 	},
 	"sideEffects": [
 		"./src/Components/publish/element.tsx",
