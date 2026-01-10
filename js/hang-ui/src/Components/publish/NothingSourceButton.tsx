@@ -1,5 +1,5 @@
 import Button from "../shared/button";
-import Icon from "../shared/icon";
+import { Ban } from "../shared/icons";
 import usePublishUIContext from "./usePublishUIContext";
 
 export default function NothingSourceButton() {
@@ -17,7 +17,7 @@ export default function NothingSourceButton() {
 				class={`publishSourceButton ${context.nothingActive() ? "active" : ""}`}
 				onClick={onClick}
 			>
-				<Icon name="ban" />
+				<Ban />
 			</Button>
 		</div>
 	);

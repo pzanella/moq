@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { render } from "solid-js/web";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import Icon from "../../../shared/icon";
+import { Audio, Buffer, Network, Video } from "../../../shared/icons";
 import { StatsItem } from "../../components/StatsItem";
 import type { BaseProvider } from "../../providers/base";
 import * as registry from "../../providers/registry";
@@ -21,12 +21,6 @@ describe("StatsItem", () => {
 		container = document.createElement("div");
 		document.body.appendChild(container);
 		mockAudioVideo = createMockProviderProps();
-
-		// Mock fetch to prevent network requests for Icon SVG files
-		global.fetch = vi.fn().mockResolvedValue({
-			ok: true,
-			text: () => Promise.resolve('<svg xmlns="http://www.w3.org/2000/svg"></svg>'),
-		});
 	});
 
 	afterEach(() => {
@@ -44,7 +38,7 @@ describe("StatsItem", () => {
 				<StatsItem
 					name="Network"
 					statProvider="network"
-					svg={<Icon name="network" />}
+					svg={<Network />}
 					audio={mockAudioVideo.audio}
 					video={mockAudioVideo.video}
 				/>
@@ -93,7 +87,7 @@ describe("StatsItem", () => {
 				<StatsItem
 					name="Audio"
 					statProvider="audio"
-					svg={<Icon name="audio" />}
+					svg={<Audio />}
 					audio={mockAudioVideo.audio}
 					video={mockAudioVideo.video}
 				/>
@@ -113,7 +107,7 @@ describe("StatsItem", () => {
 				<StatsItem
 					name="Buffer"
 					statProvider="buffer"
-					svg={<Icon name="buffer" />}
+					svg={<Buffer />}
 					audio={mockAudioVideo.audio}
 					video={mockAudioVideo.video}
 				/>
@@ -141,7 +135,7 @@ describe("StatsItem", () => {
 				<StatsItem
 					name="Network"
 					statProvider="network"
-					svg={<Icon name="network" />}
+					svg={<Network />}
 					audio={mockAudioVideo.audio}
 					video={mockAudioVideo.video}
 				/>
@@ -168,7 +162,7 @@ describe("StatsItem", () => {
 				<StatsItem
 					name="Video"
 					statProvider="video"
-					svg={<Icon name="video" />}
+					svg={<Video />}
 					audio={mockAudioVideo.audio}
 					video={mockAudioVideo.video}
 				/>
@@ -203,7 +197,7 @@ describe("StatsItem", () => {
 				<StatsItem
 					name="Audio"
 					statProvider="audio"
-					svg={<Icon name="audio" />}
+					svg={<Audio />}
 					audio={mockAudioVideo.audio}
 					video={mockAudioVideo.video}
 				/>
@@ -222,18 +216,24 @@ describe("StatsItem", () => {
 	it("renders correct class for each icon type", () => {
 		vi.mocked(registry.getStatsInformationProvider).mockReturnValue(undefined);
 
-		const statsProvider = ["network", "video", "audio", "buffer"] as const;
+		const statsProvider = [
+			{ name: "network", Icon: Network },
+			{ name: "video", Icon: Video },
+			{ name: "audio", Icon: Audio },
+			{ name: "buffer", Icon: Buffer },
+		] as const;
 
 		statsProvider.forEach((provider) => {
 			const testContainer = document.createElement("div");
 			document.body.appendChild(testContainer);
 
+			const IconComponent = provider.Icon;
 			const testDispose = render(
 				() => (
 					<StatsItem
-						name={provider.charAt(0).toUpperCase() + provider.slice(1)}
-						statProvider={provider}
-						svg={<Icon name={provider} />}
+						name={provider.name.charAt(0).toUpperCase() + provider.name.slice(1)}
+						statProvider={provider.name}
+						svg={<IconComponent />}
 						audio={mockAudioVideo.audio}
 						video={mockAudioVideo.video}
 					/>
@@ -242,7 +242,7 @@ describe("StatsItem", () => {
 			);
 
 			const item = testContainer.querySelector(".stats__item");
-			expect(item?.classList.contains(`stats__item--${provider}`)).toBe(true);
+			expect(item?.classList.contains(`stats__item--${provider.name}`)).toBe(true);
 
 			testDispose();
 			document.body.removeChild(testContainer);
@@ -290,7 +290,7 @@ describe("StatsItem", () => {
 				<StatsItem
 					name={statProvider().charAt(0).toUpperCase() + statProvider().slice(1)}
 					statProvider={statProvider()}
-					svg={<Icon name={statProvider()} />}
+					svg={statProvider() === "network" ? <Network /> : <Video />}
 					audio={mockAudioVideo.audio}
 					video={mockAudioVideo.video}
 				/>
@@ -314,7 +314,7 @@ describe("StatsItem", () => {
 				<StatsItem
 					name="Network"
 					statProvider="network"
-					svg={<Icon name="network" />}
+					svg={<Network />}
 					audio={mockAudioVideo.audio}
 					video={mockAudioVideo.video}
 				/>
@@ -345,7 +345,7 @@ describe("StatsItem", () => {
 				<StatsItem
 					name="Buffer"
 					statProvider="buffer"
-					svg={<Icon name="buffer" />}
+					svg={<Buffer />}
 					audio={mockAudioVideo.audio}
 					video={mockAudioVideo.video}
 				/>

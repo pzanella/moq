@@ -13,12 +13,6 @@ describe("StatsPanel", () => {
 		container = document.createElement("div");
 		document.body.appendChild(container);
 		mockAudioVideo = createMockProviderProps();
-
-		// Mock fetch to prevent network requests for Icon SVG files
-		global.fetch = vi.fn().mockResolvedValue({
-			ok: true,
-			text: () => Promise.resolve('<svg xmlns="http://www.w3.org/2000/svg"></svg>'),
-		});
 	});
 
 	afterEach(() => {

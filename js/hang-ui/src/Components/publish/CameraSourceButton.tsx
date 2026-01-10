@@ -1,6 +1,6 @@
 import { Show } from "solid-js";
 import Button from "../shared/button";
-import Icon from "../shared/icon";
+import { Camera } from "../shared/icons";
 import MediaSourceSourceSelector from "./MediaSourceSelector";
 import usePublishUIContext from "./usePublishUIContext";
 
@@ -30,7 +30,7 @@ export default function CameraSourceButton() {
 				class={`publishSourceButton ${context.cameraActive() ? "active" : ""}`}
 				onClick={onClick}
 			>
-				<Icon name="camera" />
+				<Camera />
 			</Button>
 			<Show when={context.cameraActive() && context.cameraDevices().length}>
 				<MediaSourceSourceSelector
