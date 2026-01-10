@@ -1,5 +1,7 @@
 import type { JSX } from "solid-js/jsx-runtime";
 
+type NativeButton = JSX.IntrinsicElements["button"];
+
 /**
  * Props for the shared Button component.
  *
@@ -14,15 +16,15 @@ import type { JSX } from "solid-js/jsx-runtime";
  * @property {number} [tabIndex] - Tab index for keyboard navigation. Uses browser default (typically 0) if not set.
  */
 export type ButtonProps = {
-	type?: "button" | "submit" | "reset";
-	title?: string;
-	onClick?: () => void;
-	class?: string;
+	type?: NativeButton["type"]; // "button" | "submit" | "reset";
+	title?: NativeButton["title"];
+	onClick?: NativeButton["onClick"];
+	class?: NativeButton["class"];
+	ariaLabel?: NativeButton["aria-label"];
+	ariaDisabled?: NativeButton["aria-disabled"];
+	disabled?: NativeButton["disabled"];
+	tabIndex?: NativeButton["tabIndex"];
 	children: JSX.Element | string;
-	ariaLabel?: string;
-	ariaDisabled?: boolean;
-	disabled?: boolean;
-	tabIndex?: number;
 };
 
 /**

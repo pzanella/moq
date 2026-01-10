@@ -1,7 +1,7 @@
 import { createContext, createSignal } from "solid-js";
 import { render } from "solid-js/web";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { Stats } from "..";
+import { Stats } from "../element";
 import type { ProviderProps } from "../types";
 import { createMockProviderProps } from "./utils";
 
