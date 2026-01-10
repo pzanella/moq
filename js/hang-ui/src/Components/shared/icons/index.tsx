@@ -1,4 +1,3 @@
-export type { IconProps, IconComponent } from "./types";
 export { ArrowDown } from "./ArrowDown";
 export { ArrowUp } from "./ArrowUp";
 export { Audio } from "./Audio";
@@ -15,6 +14,7 @@ export { Pause } from "./Pause";
 export { Play } from "./Play";
 export { Screen } from "./Screen";
 export { Stats } from "./Stats";
+export type { IconComponent, IconProps } from "./types";
 export { Video } from "./Video";
 export { VolumeHigh } from "./VolumeHigh";
 export { VolumeLow } from "./VolumeLow";

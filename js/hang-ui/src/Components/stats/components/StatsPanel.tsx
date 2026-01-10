@@ -1,4 +1,4 @@
-import { For, type Component } from "solid-js";
+import { type Component, For } from "solid-js";
 import type { IconProps } from "../../shared/icons";
 import { Audio, Buffer, Network, Video } from "../../shared/icons";
 import type { KnownStatsProviders, ProviderProps } from "../types";
