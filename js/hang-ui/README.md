@@ -37,13 +37,88 @@ Here's how you can use them (see also @moq/hang-demo for a complete example):
 ```
 
 ```html
-	<hang-publish-ui>
-		<hang-publish url="<MOQ relay URL>" path="<relay path>">
-			<video
-				style="width: 100%; height: auto; border-radius: 4px; margin: 0 auto;"
-				muted
-				autoplay
-			></video>
-		</hang-publish>
-	</hang-publish-ui>
+<hang-publish-ui>
+	<hang-publish url="<MOQ relay URL>" path="<relay path>">
+		<video
+			style="width: 100%; height: auto; border-radius: 4px; margin: 0 auto;"
+			muted
+			autoplay
+		></video>
+	</hang-publish>
+</hang-publish-ui>
 ```
+
+## Project Structure
+The `@moq/hang-ui` package is organized into modular components and utilities:
+
+```
+src/
+├── publish/             # Publishing UI components
+│   ├── components/      # UI controls for publishing
+│   ├── hooks/           # Custom React/Solid hooks for publish UI
+│   ├── styles/          # CSS styles for publish UI
+│   ├── context.tsx      # Context provider for publish state
+│   ├── element.tsx      # Main publish UI component
+│   └── index.tsx        # Entry point for publish UI
+│
+├── watch/               # Watching/playback UI components
+│   ├── components/      # UI controls for watching
+│   ├── hooks/           # Custom React/Solid hooks for watch UI
+│   ├── styles/          # CSS styles for watch UI
+│   ├── context.tsx      # Context provider for watch state
+│   ├── element.tsx      # Main watch UI component
+│   └── index.tsx        # Entry point for watch UI
+│
+├── stats/               # Statistics and monitoring components
+│   ├── components/      # Stats UI components
+│   ├── providers/       # Stats data providers
+│   ├── styles/          # CSS styles for stats UI
+│   ├── element.tsx      # Main stats UI component
+│   ├── index.tsx        # Entry point for stats UI
+│   └── types.ts         # TypeScript type definitions
+│
+└── shared/              # Shared components and utilities
+    ├── components/      # Reusable UI components
+    │   ├── button/      # Button component
+    │   └── icon/        # Icon component
+    ├── flex.css         # Flexbox utilities
+    └── variables.css    # CSS variables and theme
+
+```
+
+### Module Overview
+
+#### **publish/**
+Contains all UI components related to media publishing. It provides controls for selecting media sources (camera, screen, microphone, file) and managing the publishing state.
+
+- **MediaSourceSelector**: Allows users to choose their media source
+- **PublishControls**: Main control panel for publishing
+- **Source buttons**: Individual buttons for camera, screen, microphone, file, and "nothing" sources
+- **PublishStatusIndicator**: Displays connection and publishing status
+
+#### **watch/**
+Implements the video player UI with controls for watching live streams. Includes playback controls, quality selection, and buffering indicators.
+
+- **WatchControls**: Main control panel for the video player
+- **PlayPauseButton**: Play/pause toggle
+- **VolumeSlider**: Audio volume control
+- **LatencySlider**: Adjust playback latency
+- **QualitySelector**: Switch between quality levels
+- **FullscreenButton**: Toggle fullscreen mode
+- **BufferingIndicator**: Visual feedback during buffering
+- **StatsButton**: Toggle statistics panel
+
+#### **stats/**
+Provides real-time statistics monitoring for both audio and video streams. Uses a provider pattern to collect and display metrics.
+
+- **StatsPanel**: Main panel displaying all statistics
+- **Providers**: Modular statistics collectors for audio, video, network, and buffer metrics
+- **Registry**: Manages and coordinates different stats providers
+- Types for statistics data structures
+
+#### **shared/**
+Common components and utilities used across the package.
+
+- **Button**: Reusable button component with consistent styling
+- **Icon**: Icon wrapper component
+- **CSS utilities**: Shared styles, variables, and flexbox utilities
