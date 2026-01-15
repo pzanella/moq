@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 import { render } from "solid-js/web";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import * as Icon from "../../../shared/components/icon/icon";
+import * as Icon from "../../../icon/icon";
 import { StatsItem } from "../../components/StatsItem";
 import type { BaseProvider } from "../../providers/base";
 import * as registry from "../../providers/registry";

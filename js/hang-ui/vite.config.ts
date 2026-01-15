@@ -9,7 +9,7 @@ export default defineConfig({
 			entry: {
 				publish: resolve(__dirname, "src/publish/index.tsx"),
 				watch: resolve(__dirname, "src/watch/index.tsx"),
-				stats: resolve(__dirname, "src/stats/index.tsx"),
+				stats: resolve(__dirname, "src/shared/components/stats/index.tsx"),
 			},
 			formats: ["es"],
 		},
