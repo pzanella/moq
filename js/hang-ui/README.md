@@ -71,9 +71,9 @@ src/
 │
 └── shared/              # Shared components and utilities
     ├── components/      # Reusable UI components
-    │   ├── button/      # Button component
-    │   ├── icon/        # Icon component
-	|	└── stats/		 # Statistics and monitoring components
+	│   ├── button/      # Button component
+	│   ├── icon/        # Icon component
+	│   └── stats/       # Statistics and monitoring components
     ├── flex.css         # Flexbox utilities
     └── variables.css    # CSS variables and theme
 
