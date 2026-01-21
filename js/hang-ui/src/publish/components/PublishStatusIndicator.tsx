@@ -1,20 +1,37 @@
-import { Match, Switch } from "solid-js";
 import usePublishUIContext from "../hooks/use-publish-ui";
+
+type PublishStatus = "no-url" | "disconnected" | "connecting" | "select-source" | "video-only" | "audio-only" | "live";
+type StatusIndicatorType = "error" | "warning" | "success" | "connecting";
+
+type StatusConfig = {
+	type: StatusIndicatorType;
+	text: string;
+};
+
+const STATUS_MAP: Record<PublishStatus, StatusConfig> = {
+	"no-url": { type: "error", text: "No URL" },
+	disconnected: { type: "error", text: "Disconnected" },
+	connecting: { type: "connecting", text: "Connecting..." },
+	"select-source": { type: "warning", text: "Select Source" },
+	"video-only": { type: "success", text: "Video Only" },
+	"audio-only": { type: "success", text: "Audio Only" },
+	live: { type: "success", text: "Live" },
+};
 
 export default function PublishStatusIndicator() {
 	const context = usePublishUIContext();
 
+	const statusConfig = (): StatusConfig => {
+		const status = context.publishStatus() as PublishStatus;
+		return STATUS_MAP[status] || { type: "error", text: "Unknown" };
+	};
+
 	return (
-		<output>
-			<Switch>
-				<Match when={context.publishStatus() === "no-url"}>🔴 No URL</Match>
-				<Match when={context.publishStatus() === "disconnected"}>🔴 Disconnected</Match>
-				<Match when={context.publishStatus() === "connecting"}>🟡 Connecting...</Match>
-				<Match when={context.publishStatus() === "select-source"}>🟡 Select Source</Match>
-				<Match when={context.publishStatus() === "video-only"}>🟢 Video Only</Match>
-				<Match when={context.publishStatus() === "audio-only"}>🟢 Audio Only</Match>
-				<Match when={context.publishStatus() === "live"}>🟢 Live</Match>
-			</Switch>
-		</output>
+		<div class="publish-ui__status-indicator flex--center">
+			<span class={`publish-ui__status-indicator-dot publish-ui__status-indicator-dot--${statusConfig().type}`} />
+			<span class={`publish-ui__status-indicator-text publish-ui__status-indicator-text--${statusConfig().type}`}>
+				{statusConfig().text}
+			</span>
+		</div>
 	);
 }
