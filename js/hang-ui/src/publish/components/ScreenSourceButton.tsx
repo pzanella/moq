@@ -11,14 +11,12 @@ export default function ScreenSourceButton() {
 	};
 
 	return (
-		<div class="flex--center">
-			<Button
-				title="Screen"
-				class={`publish-ui__source-button flex--center ${context.screenActive() ? "publish-ui__source-button--active" : ""}`}
-				onClick={onClick}
-			>
-				<Icon.Screen />
-			</Button>
-		</div>
+		<Button
+			title="Screen"
+			class={`publish-ui__source-button flex--center ${context.screenActive() ? "publish-ui__source-button--active" : ""}`}
+			onClick={onClick}
+		>
+			<Icon.Screen />
+		</Button>
 	);
 }
