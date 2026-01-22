@@ -7,7 +7,7 @@ export default function ScreenSourceButton() {
 	const onClick = () => {
 		context.hangPublish.source.set("screen");
 		context.hangPublish.invisible.set(false);
-		context.hangPublish.muted.set(false);
+		context.hangPublish.muted.set(true);
 	};
 
 	return (

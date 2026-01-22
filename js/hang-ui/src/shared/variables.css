@@ -9,8 +9,10 @@
 	--color-white-alpha-90: rgba(255, 255, 255, 0.9);
 	--color-gray-100: #9ca3af;
 	--color-blue-400: #00dfff;
+	--color-blue-500: #52a1ff;
 	--color-blue-900: #1b3243;
 	--color-purple-400: #a855f7;
+	--color-purple-500: #c27bff;
 	--color-purple-900: #31144a;
 	--color-green-400: #65ee2e;
 	--color-green-900: #3d4928;
@@ -49,7 +51,7 @@
 	--spacing-16: 1rem; /* 16px */
 	--spacing-24: 1.5rem; /* 24px */
 	--spacing-48: 3rem; /* 48px */
-	--border-radius-sm: 8px;
-	--border-radius-md: 12px;
-	--border-radius-lg: 16px;
+	--border-radius-sm: 0.5rem;
+	--border-radius-md: 0.75rem;
+	--border-radius-lg: 1rem;
 }

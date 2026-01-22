@@ -1,35 +1,36 @@
+import type { PublishStatus } from "../context";
 import usePublishUIContext from "../hooks/use-publish-ui";
 
-type PublishStatus = "no-url" | "disconnected" | "connecting" | "select-source" | "video-only" | "audio-only" | "live";
-type StatusIndicatorType = "error" | "warning" | "success" | "connecting";
+type StatusIndicatorConfig = { variant: string; text: string };
 
-type StatusConfig = {
-	type: StatusIndicatorType;
-	text: string;
+const STATUS_MAP: Record<PublishStatus, StatusIndicatorConfig> = {
+	"no-url": { variant: "error", text: "No URL" },
+	disconnected: { variant: "error", text: "Disconnected" },
+	connecting: { variant: "connecting", text: "Connecting..." },
+	"select-source": { variant: "warning", text: "Select Source" },
+	"video-only": { variant: "video-only", text: "Video Only" },
+	"audio-only": { variant: "audio-only", text: "Audio Only" },
+	live: { variant: "live", text: "Live" },
 };
 
-const STATUS_MAP: Record<PublishStatus, StatusConfig> = {
-	"no-url": { type: "error", text: "No URL" },
-	disconnected: { type: "error", text: "Disconnected" },
-	connecting: { type: "connecting", text: "Connecting..." },
-	"select-source": { type: "warning", text: "Select Source" },
-	"video-only": { type: "success", text: "Video Only" },
-	"audio-only": { type: "success", text: "Audio Only" },
-	live: { type: "success", text: "Live" },
-};
+const unknownStatus: StatusIndicatorConfig = { variant: "error", text: "Unknown" };
 
 export default function PublishStatusIndicator() {
 	const context = usePublishUIContext();
 
-	const statusConfig = (): StatusConfig => {
-		const status = context.publishStatus() as PublishStatus;
-		return STATUS_MAP[status] || { type: "error", text: "Unknown" };
+	const statusConfig = (): StatusIndicatorConfig => {
+		const status: PublishStatus = context.publishStatus();
+		return STATUS_MAP[status] || unknownStatus;
 	};
 
 	return (
 		<div class="publish-ui__status-indicator flex--center">
-			<span class={`publish-ui__status-indicator-dot publish-ui__status-indicator-dot--${statusConfig().type}`} />
-			<span class={`publish-ui__status-indicator-text publish-ui__status-indicator-text--${statusConfig().type}`}>
+			<span
+				class={`publish-ui__status-indicator-dot publish-ui__status-indicator-dot--${statusConfig().variant}`}
+			/>
+			<span
+				class={`publish-ui__status-indicator-text publish-ui__status-indicator-text--${statusConfig().variant}`}
+			>
 				{statusConfig().text}
 			</span>
 		</div>
