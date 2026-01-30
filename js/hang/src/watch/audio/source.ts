@@ -145,17 +145,9 @@ export class Source {
 		const enabled = effect.get(this.enabled);
 		if (!enabled) return;
 
-		const catalog = effect.get(this.catalog);
-		if (!catalog) return;
-
-		const broadcast = effect.get(this.broadcast);
-		if (!broadcast) return;
-
-		const config = effect.get(this.config);
-		if (!config) return;
-
-		const active = effect.get(this.active);
-		if (!active) return;
+		const values = effect.getAll([this.catalog, this.broadcast, this.config, this.active]);
+		if (!values) return;
+		const [catalog, broadcast, config, active] = values;
 
 		const sub = broadcast.subscribe(active, catalog.priority);
 		effect.cleanup(() => sub.close());
