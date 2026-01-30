@@ -114,11 +114,12 @@ export class Broadcast {
 	}
 
 	#runBroadcast(effect: Effect): void {
-		if (!effect.get(this.enabled) || !effect.get(this.#active)) return;
-
-		const values = effect.getAll([this.connection, this.path]);
+		const values = effect.getAll([this.enabled, this.#active, this.connection]);
 		if (!values) return;
-		const [conn, path] = values;
+		const [_enabled, _active, conn] = values;
+
+		const path = effect.get(this.path);
+		if (path === undefined) return;
 
 		const broadcast = conn.consume(path);
 		effect.cleanup(() => broadcast.close());
@@ -127,10 +128,9 @@ export class Broadcast {
 	}
 
 	#runCatalog(effect: Effect): void {
-		if (!effect.get(this.enabled)) return;
-
-		const broadcast = effect.get(this.#broadcast);
-		if (!broadcast) return;
+		const values = effect.getAll([this.enabled, this.#broadcast]);
+		if (!values) return;
+		const [_enabled, broadcast] = values;
 
 		this.status.set("loading");
 
