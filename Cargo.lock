@@ -1571,47 +1571,23 @@ checksum = "253b313319f7109de64e480ffb606f89475cd758bae82e096e00c5d95341d30e"
 
 [[package]]
 name = "hang"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "anyhow",
  "buf-list",
  "bytes",
  "derive_more",
  "futures",
- "h264-parser",
  "hex",
  "lazy_static",
- "m3u8-rs",
  "moq-lite",
  "moq-native",
- "mp4-atom",
- "num_enum",
  "regex",
- "reqwest 0.12.28",
- "scuffle-h265",
  "serde",
  "serde_json",
  "serde_with",
  "thiserror 2.0.18",
  "tokio",
- "tracing",
- "url",
-]
-
-[[package]]
-name = "hang-cli"
-version = "0.7.5"
-dependencies = [
- "anyhow",
- "axum",
- "axum-server",
- "clap",
- "hang",
- "moq-native",
- "rustls",
- "sd-notify",
- "tokio",
- "tower-http",
  "tracing",
  "url",
 ]
@@ -2443,6 +2419,7 @@ dependencies = [
  "cbindgen",
  "hang",
  "moq-lite",
+ "moq-mux",
  "moq-native",
  "slab",
  "thiserror 2.0.18",
@@ -2604,6 +2581,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "moq-cli"
+version = "0.7.5"
+dependencies = [
+ "anyhow",
+ "axum",
+ "axum-server",
+ "clap",
+ "hang",
+ "moq-mux",
+ "moq-native",
+ "rustls",
+ "sd-notify",
+ "tokio",
+ "tower-http",
+ "tracing",
+ "url",
+]
+
+[[package]]
 name = "moq-clock"
 version = "0.10.4"
 dependencies = [
@@ -2633,6 +2629,27 @@ dependencies = [
  "tracing",
  "web-async",
  "web-transport-trait",
+]
+
+[[package]]
+name = "moq-mux"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "buf-list",
+ "bytes",
+ "derive_more",
+ "h264-parser",
+ "hang",
+ "m3u8-rs",
+ "moq-lite",
+ "mp4-atom",
+ "num_enum",
+ "reqwest 0.12.28",
+ "scuffle-h265",
+ "tokio",
+ "tracing",
+ "url",
 ]
 
 [[package]]

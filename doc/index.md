@@ -98,7 +98,7 @@ If everything works, a browser window will pop up demoing how to both publish an
 There are a bunch of MoQ binaries and plugins. Some highlights:
 
 - [moq-relay](/app/relay/) - A server connecting publishers to subscribers, able to form a [self-hosted CDN cluster](/app/relay/cluster).
-- [hang-cli](/app/cli) - A CLI that can import and publish MoQ broadcasts from a variety of formats (fMP4, HLS, etc), including via ffmpeg.
+- [moq-cli](/app/cli) - A CLI that can import and publish MoQ broadcasts from a variety of formats (fMP4, HLS, etc), including via ffmpeg.
 - [obs](/app/obs) - An OBS plugin, able to publish a MoQ broadcast and/or use MoQ broadcasts as sources.
 - [gstreamer](/app/gstreamer) - A gstreamer plugin, split into a source and a sink.
 - [web](/app/web) - A web component you can throw on your website, wrapping a `<video>` tag. It can also do publishing!
@@ -110,7 +110,8 @@ The main focus is [native](/rs/env/native), but there's also some [WASM support]
 
 Some highlights:
 - [moq-lite](/rs/crate/moq-lite) - Performs the core asynchronous networking, caching, and fanout.
-- [hang](/rs/crate/hang) - Performs any media stuff: currently only transmuxing.
+- [hang](/rs/crate/hang) - Media-specific encoding and streaming (catalog, container format).
+- [moq-mux](/rs/crate/moq-mux) - Media muxers/demuxers for fMP4, CMAF, and HLS import.
 - [libmoq](/rs/crate/libmoq) - C bindings for the above, no finagling Rust into your build system.
 - [web-transport](/rs/crate/web-transport) - A suite of crates required to get QUIC access in the browser, plus some polyfills.
 - [...and more](/rs/)

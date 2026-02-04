@@ -1,20 +1,20 @@
-use crate as hang;
 use anyhow::Context;
 use buf_list::BufList;
 use bytes::Buf;
-use moq_lite as moq;
 
 /// Opus decoder, initialized via a OpusHead. Does not support Ogg.
 pub struct Opus {
-	broadcast: hang::BroadcastProducer,
-	track: Option<moq_lite::TrackProducer>,
+	broadcast: moq_lite::BroadcastProducer,
+	catalog: hang::CatalogProducer,
+	track: Option<hang::container::OrderedProducer>,
 	zero: Option<tokio::time::Instant>,
 }
 
 impl Opus {
-	pub fn new(broadcast: hang::BroadcastProducer) -> Self {
+	pub fn new(broadcast: moq_lite::BroadcastProducer, catalog: hang::CatalogProducer) -> Self {
 		Self {
 			broadcast,
+			catalog,
 			track: None,
 			zero: None,
 		}
@@ -42,10 +42,7 @@ impl Opus {
 			buf.advance(buf.remaining());
 		}
 
-		let track = moq::Track {
-			name: self.broadcast.track_name("audio"),
-			priority: 2,
-		};
+		let mut catalog = self.catalog.lock();
 
 		let config = hang::catalog::AudioConfig {
 			codec: hang::catalog::AudioCodec::Opus,
@@ -57,19 +54,16 @@ impl Opus {
 			jitter: None,
 		};
 
+		let track = catalog.audio.create_track("opus", config.clone());
 		tracing::debug!(name = ?track.name, ?config, "starting track");
 
 		let track = self.broadcast.create_track(track);
-
-		let mut catalog = self.broadcast.catalog.lock();
-		catalog.insert_audio(track.info.name.clone(), config);
-
-		self.track = Some(track);
+		self.track = Some(track.into());
 
 		Ok(())
 	}
 
-	pub fn decode<T: Buf>(&mut self, buf: &mut T, pts: Option<hang::Timestamp>) -> anyhow::Result<()> {
+	pub fn decode<T: Buf>(&mut self, buf: &mut T, pts: Option<hang::container::Timestamp>) -> anyhow::Result<()> {
 		let pts = self.pts(pts)?;
 		let track = self.track.as_mut().context("not initialized")?;
 
@@ -79,15 +73,14 @@ impl Opus {
 			payload.push_chunk(buf.copy_to_bytes(buf.chunk().len()));
 		}
 
-		let frame = hang::Frame {
+		let frame = hang::container::Frame {
 			timestamp: pts,
-			keyframe: true,
+			keyframe: true, // Audio frames are always keyframes
 			payload,
 		};
 
-		let mut group = track.append_group();
-		frame.encode(&mut group)?;
-		group.close();
+		track.write(frame)?;
+		track.flush()?; // Flush the current group because we know the next frame will be a keyframe.
 
 		Ok(())
 	}
@@ -96,13 +89,15 @@ impl Opus {
 		self.track.is_some()
 	}
 
-	fn pts(&mut self, hint: Option<hang::Timestamp>) -> anyhow::Result<hang::Timestamp> {
+	fn pts(&mut self, hint: Option<hang::container::Timestamp>) -> anyhow::Result<hang::container::Timestamp> {
 		if let Some(pts) = hint {
 			return Ok(pts);
 		}
 
 		let zero = self.zero.get_or_insert_with(tokio::time::Instant::now);
-		Ok(hang::Timestamp::from_micros(zero.elapsed().as_micros() as u64)?)
+		Ok(hang::container::Timestamp::from_micros(
+			zero.elapsed().as_micros() as u64
+		)?)
 	}
 }
 
@@ -110,7 +105,7 @@ impl Drop for Opus {
 	fn drop(&mut self) {
 		if let Some(track) = self.track.take() {
 			tracing::debug!(name = ?track.info.name, "ending track");
-			self.broadcast.catalog.lock().remove_audio(&track.info.name);
+			self.catalog.lock().audio.remove_track(&track.info);
 		}
 	}
 }

@@ -25,8 +25,7 @@ pub struct Frame {
 
 	/// Whether this frame is a keyframe (can be decoded independently).
 	///
-	/// Keyframes are used as group boundaries and entry points for new subscribers.
-	/// It's necessary to periodically encode keyframes to support new subscribers.
+	/// Keyframes are used to start new groups for efficient seeking and caching.
 	pub keyframe: bool,
 
 	/// The encoded media data for this frame, split into chunks.
@@ -39,6 +38,8 @@ pub struct Frame {
 
 impl Frame {
 	/// Encode the frame to the given group.
+	///
+	/// NOTE: The [Self::keyframe] flag is ignored for this method; you need to create a new group manually.
 	pub fn encode(&self, group: &mut moq_lite::GroupProducer) -> Result<(), Error> {
 		let mut header = BytesMut::new();
 		self.timestamp.encode(&mut header, lite::Version::Draft02);
