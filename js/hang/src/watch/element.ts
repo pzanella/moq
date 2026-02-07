@@ -170,12 +170,24 @@ export default class HangWatch extends HTMLElement implements Backend {
 		return this.connection.url;
 	}
 
+	set url(value: string | URL | undefined) {
+		value ? this.setAttribute("url", String(value)) : this.removeAttribute("url");
+	}
+
 	get path(): Signal<Moq.Path.Valid | undefined> {
 		return this.broadcast.path;
 	}
 
+	set path(value: string | Moq.Path.Valid | undefined) {
+		value ? this.setAttribute("path", String(value)) : this.removeAttribute("path");
+	}
+
 	get jitter(): Signal<Time.Milli> {
 		return this.#backend.jitter;
+	}
+
+	set jitter(value: string | Time.Milli) {
+		value ? this.setAttribute("jitter", String(value)) : this.removeAttribute("jitter");
 	}
 
 	get paused(): Signal<boolean> {
@@ -196,5 +208,22 @@ customElements.define("hang-watch", HangWatch);
 declare global {
 	interface HTMLElementTagNameMap {
 		"hang-watch": HangWatch;
+	}
+	namespace JSX {
+		interface IntrinsicElements {
+			"hang-watch": React.HTMLAttributes<HangWatch> & {
+				[K in Observed]?: string | number | boolean;
+			};
+		}
+	}
+}
+
+declare module "react" {
+	namespace JSX {
+		interface IntrinsicElements {
+			"hang-watch": React.HTMLAttributes<HangWatch> & {
+				[K in Observed]?: string | number | boolean;
+			};
+		}
 	}
 }

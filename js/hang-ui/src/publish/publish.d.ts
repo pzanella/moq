@@ -1,0 +1,20 @@
+declare global {
+	interface HTMLElementTagNameMap {
+		"hang-publish-ui": HTMLElement;
+	}
+	namespace JSX {
+		interface IntrinsicElements {
+			"hang-publish-ui": HTMLElement;
+		}
+	}
+}
+
+declare module "react" {
+	namespace JSX {
+		interface IntrinsicElements {
+			"hang-publish-ui": React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+		}
+	}
+}
+
+export {};
