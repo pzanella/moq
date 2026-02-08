@@ -12,6 +12,12 @@ import type * as Video from "./video";
 const OBSERVED = ["url", "name", "path", "paused", "volume", "muted", "reload", "jitter", "latency"] as const;
 type Observed = (typeof OBSERVED)[number];
 
+type HangWatchProps<TChildren = unknown> = {
+	[K in Observed]?: string | number | boolean;
+} & {
+	children?: TChildren;
+};
+
 // Close everything when this element is garbage collected.
 // This is primarily to avoid a console.warn that we didn't close() before GC.
 // There's no destructor for web components so this is the best we can do.
@@ -211,9 +217,7 @@ declare global {
 	}
 	namespace JSX {
 		interface IntrinsicElements {
-			"hang-watch": {
-				[K in Observed]?: string | number | boolean;
-			};
+			"hang-watch": HangWatchProps;
 		}
 	}
 }
@@ -221,9 +225,9 @@ declare global {
 declare module "react" {
 	namespace JSX {
 		interface IntrinsicElements {
-			"hang-watch": import("react").HTMLAttributes<HangWatch> & {
-				[K in Observed]?: string | number | boolean;
-			};
+			"hang-watch": HangWatchProps;
 		}
 	}
 }
+
+export { HangWatch };

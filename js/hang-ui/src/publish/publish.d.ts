@@ -4,7 +4,9 @@ declare global {
 	}
 	namespace JSX {
 		interface IntrinsicElements {
-			"hang-publish-ui": HTMLElement;
+			"hang-publish-ui": {
+				children?: JSX.Element | JSX.Element[];
+			};
 		}
 	}
 }
@@ -12,10 +14,9 @@ declare global {
 declare module "react" {
 	namespace JSX {
 		interface IntrinsicElements {
-			"hang-publish-ui": import("react").DetailedHTMLProps<
-				import("react").HTMLAttributes<HTMLElement>,
-				HTMLElement
-			>;
+			"hang-publish-ui": {
+				children?: JSX.Element | JSX.Element[];
+			};
 		}
 	}
 }

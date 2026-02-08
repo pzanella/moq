@@ -9,6 +9,12 @@ type Observed = (typeof OBSERVED)[number];
 
 type SourceType = "camera" | "screen" | "file";
 
+type HangPublishProps<TChildren = unknown> = {
+	[K in Observed]?: string | number | boolean;
+} & {
+	children?: TChildren;
+};
+
 // Close everything when this element is garbage collected.
 // This is primarily to avoid a console.warn that we didn't close() before GC.
 // There's no destructor for web components so this is the best we can do.
@@ -247,9 +253,7 @@ declare global {
 	}
 	namespace JSX {
 		interface IntrinsicElements {
-			"hang-publish": {
-				[K in Observed]?: string | number | boolean;
-			};
+			"hang-publish": HangPublishProps;
 		}
 	}
 }
@@ -257,9 +261,9 @@ declare global {
 declare module "react" {
 	namespace JSX {
 		interface IntrinsicElements {
-			"hang-publish": import("react").HTMLAttributes<HangPublish> & {
-				[K in Observed]?: string | number | boolean;
-			};
+			"hang-publish": HangPublishProps;
 		}
 	}
 }
+
+export { HangPublish };

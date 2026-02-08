@@ -4,7 +4,9 @@ declare global {
 	}
 	namespace JSX {
 		interface IntrinsicElements {
-			"hang-watch-ui": HTMLElement;
+			"hang-watch-ui": {
+				children?: JSX.Element | JSX.Element[];
+			};
 		}
 	}
 }
@@ -12,10 +14,9 @@ declare global {
 declare module "react" {
 	namespace JSX {
 		interface IntrinsicElements {
-			"hang-watch-ui": import("react").DetailedHTMLProps<
-				import("react").HTMLAttributes<HTMLElement>,
-				HTMLElement
-			>;
+			"hang-watch-ui": {
+				children?: JSX.Element | JSX.Element[];
+			};
 		}
 	}
 }
