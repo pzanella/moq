@@ -1,6 +1,7 @@
 import type HangPublish from "@moq/hang/publish/element";
 import { render } from "solid-js/web";
 import { PublishUI } from "./element.tsx";
+import styles from "./styles/index.css?inline";
 
 /**
  * @tag hang-publish-ui
@@ -20,10 +21,11 @@ import { PublishUI } from "./element.tsx";
  *
  * @example React
  * ```tsx
- * import { HangPublishUI } from '@moq/hang-ui/react';
  * import '@moq/hang/publish/element';
+ * import '@moq/hang-ui/publish';
+ * import { HangPublishUI } from '@moq/hang-ui/react';
  *
- * export function StreamPublisher({ url, path }) {
+ * export function HangPublishComponent({ url, path }) {
  *   return (
  *     <HangPublishUI>
  *       <hang-publish url={url} path={path} />
@@ -33,20 +35,38 @@ import { PublishUI } from "./element.tsx";
  * ```
  */
 class HangPublishComponent extends HTMLElement {
-	#root?: HTMLDivElement;
+	#root?: ShadowRoot;
+	#dispose?: () => void;
+	#connected = false;
 
 	connectedCallback() {
-		this.#root = document.createElement("div");
-		this.appendChild(this.#root);
+		this.#connected = true;
 
-		render(() => {
-			const publish: HangPublish | null = this.querySelector("hang-publish");
-			return publish ? <PublishUI publish={publish} /> : null;
-		}, this.#root);
+		// Reuse existing shadow root on reconnect (attachShadow throws if called twice)
+		this.#root ??= this.attachShadow({ mode: "open" });
+
+		// Defer render to allow frameworks to append children first
+		queueMicrotask(() => {
+			if (!this.#connected || !this.#root) return;
+
+			const publish = this.querySelector("hang-publish") as HangPublish | null;
+			this.#dispose = render(
+				() => (
+					<>
+						<style>{styles}</style>
+						<slot />
+						{publish ? <PublishUI publish={publish} /> : null}
+					</>
+				),
+				this.#root,
+			);
+		});
 	}
 
 	disconnectedCallback() {
-		this.#root?.remove();
+		this.#connected = false;
+		this.#dispose?.();
+		this.#dispose = undefined;
 	}
 }
 

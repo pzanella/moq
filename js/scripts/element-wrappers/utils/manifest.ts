@@ -8,7 +8,7 @@
  * - Extract custom element definitions for code generation
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import type { CustomElement, CustomElementsManifest, Declaration } from "./types";
 
@@ -30,13 +30,11 @@ function extractJSDocMetadata(
 
 	// Match JSDoc blocks with @tag, @summary, and @description
 	const jsDocRegex = /\/\*\*([\s\S]*?)\*\//g;
-	let match: RegExpExecArray | null = null;
 
-	match = jsDocRegex.exec(content);
-	while (match !== null) {
+	for (const match of content.matchAll(jsDocRegex)) {
 		const jsDocContent = match[1];
 
-		// Extract @tag value
+		// Extract @tag value — skip blocks without @tag
 		const tagMatch = jsDocContent.match(/@tag\s+(\S+)/);
 		if (!tagMatch) continue;
 
@@ -81,8 +79,6 @@ function extractJSDocMetadata(
 			description,
 			...(Object.keys(examples).length > 0 && { examples }),
 		});
-
-		match = jsDocRegex.exec(content);
 	}
 
 	return metadata;
@@ -105,13 +101,37 @@ export function loadManifest(basePath: string = process.cwd()): CustomElementsMa
 		const manifest = JSON.parse(content) as CustomElementsManifest;
 
 		// Enhance manifest with JSDoc metadata from source files
+		// Scan all .ts/.tsx files in src/ directory for JSDoc annotations
 		try {
-			const watchSource = readFileSync(join(basePath, "src/watch/index.tsx"), "utf-8");
-			const publishSource = readFileSync(join(basePath, "src/publish/index.tsx"), "utf-8");
+			const allMetadata = new Map<
+				string,
+				{ summary?: string; description?: string; examples?: Record<string, string> }
+			>();
 
-			const watchMetadata = extractJSDocMetadata(watchSource);
-			const publishMetadata = extractJSDocMetadata(publishSource);
-			const allMetadata = new Map([...watchMetadata, ...publishMetadata]);
+			// Recursively find and parse all TypeScript source files
+			const srcDir = join(basePath, "src");
+
+			if (existsSync(srcDir)) {
+				const scanDirectory = (dir: string): void => {
+					const entries = readdirSync(dir);
+					for (const entry of entries) {
+						const fullPath = join(dir, entry);
+						const stat = statSync(fullPath);
+
+						if (stat.isDirectory()) {
+							scanDirectory(fullPath);
+						} else if (entry.endsWith(".ts") || entry.endsWith(".tsx")) {
+							const source = readFileSync(fullPath, "utf-8");
+							const metadata = extractJSDocMetadata(source);
+							for (const [tag, data] of metadata) {
+								allMetadata.set(tag, data);
+							}
+						}
+					}
+				};
+
+				scanDirectory(srcDir);
+			}
 
 			// Update manifest declarations
 			manifest.modules.forEach((mod) => {
@@ -164,7 +184,7 @@ export function extractCustomElements(manifest: CustomElementsManifest): CustomE
 			const declWithExamples = decl as DeclarationWithExamples;
 			// Look for custom elements either by kind or by customElement flag
 			if ((decl.kind === "custom-element" || declWithExamples.customElement) && decl.tagName) {
-				// Deduplate by tagName
+				// Deduplicate by tagName
 				if (!seenTagNames.has(decl.tagName)) {
 					seenTagNames.add(decl.tagName);
 					elements.push({
@@ -176,15 +196,6 @@ export function extractCustomElements(manifest: CustomElementsManifest): CustomE
 						events: decl.events,
 						attributes: decl.attributes,
 						properties: decl.properties,
-						/**
-						 * Convert kebab-case tag name to PascalCase component name
-						 *
-						 * Handles custom mappings for specific elements, otherwise converts
-						 * kebab-case to PascalCase (e.g., "hang-watch-ui" → "HangWatchUI").
-						 *
-						 * @param tagName - Kebab-case custom element tag name
-						 * @returns PascalCase component name
-						 */
 						examples: declWithExamples.examples,
 					});
 				}
@@ -195,18 +206,27 @@ export function extractCustomElements(manifest: CustomElementsManifest): CustomE
 	return elements;
 }
 
+/**
+ * Convert kebab-case tag name to PascalCase component name
+ *
+ * Common abbreviations (e.g., "ui", "api") are kept uppercase.
+ *
+ * @example
+ * tagNameToComponentName("my-element") // "MyElement"
+ * tagNameToComponentName("video-player-ui") // "VideoPlayerUI"
+ *
+ * @param tagName - Kebab-case custom element tag name
+ * @returns PascalCase component name
+ */
 export function tagNameToComponentName(tagName: string): string {
-	const customNames = {
-		"hang-watch-ui": "HangWatchUI",
-		"hang-publish-ui": "HangPublishUI",
-	} as const satisfies Record<string, string>;
-
-	if (tagName in customNames) {
-		return customNames[tagName as keyof typeof customNames];
-	}
-
 	return tagName
 		.split("-")
-		.map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+		.map((part) => {
+			// Keep "ui" uppercase if it's the last part
+			if (part.toLowerCase() === "ui") {
+				return "UI";
+			}
+			return part.charAt(0).toUpperCase() + part.slice(1);
+		})
 		.join("");
 }

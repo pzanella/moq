@@ -1,6 +1,7 @@
 import type HangWatch from "@moq/hang/watch/element";
 import { render } from "solid-js/web";
 import { WatchUI } from "./element.tsx";
+import styles from "./styles/index.css?inline";
 
 /**
  * @tag hang-watch-ui
@@ -21,10 +22,11 @@ import { WatchUI } from "./element.tsx";
  *
  * @example React
  * ```tsx
- * import { HangWatchUI } from '@moq/hang-ui/react';
  * import '@moq/hang/watch/element';
+ * import '@moq/hang-ui/watch';
+ * import { HangWatchUI } from '@moq/hang-ui/react';
  *
- * export function VideoPlayer({ url, path }) {
+ * export function HangWatchComponent({ url, path }) {
  *   return (
  *     <HangWatchUI>
  *       <hang-watch url={url} path={path} jitter="100" muted reload volume="0">
@@ -36,20 +38,38 @@ import { WatchUI } from "./element.tsx";
  * ```
  */
 class HangWatchComponent extends HTMLElement {
-	#root?: HTMLDivElement;
+	#root?: ShadowRoot;
+	#dispose?: () => void;
+	#connected = false;
 
 	connectedCallback() {
-		this.#root = document.createElement("div");
-		this.appendChild(this.#root);
+		this.#connected = true;
 
-		render(() => {
-			const watch: HangWatch | null = this.querySelector("hang-watch");
-			return watch ? <WatchUI watch={watch} /> : null;
-		}, this.#root);
+		// Reuse existing shadow root on reconnect (attachShadow throws if called twice)
+		this.#root ??= this.attachShadow({ mode: "open" });
+
+		// Defer render to allow frameworks to append children first
+		queueMicrotask(() => {
+			if (!this.#connected || !this.#root) return;
+
+			const watch = this.querySelector("hang-watch") as HangWatch | null;
+			this.#dispose = render(
+				() => (
+					<>
+						<style>{styles}</style>
+						<slot />
+						{watch ? <WatchUI watch={watch} /> : null}
+					</>
+				),
+				this.#root,
+			);
+		});
 	}
 
 	disconnectedCallback() {
-		this.#root?.remove();
+		this.#connected = false;
+		this.#dispose?.();
+		this.#dispose = undefined;
 	}
 }
 

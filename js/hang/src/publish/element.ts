@@ -9,17 +9,54 @@ type Observed = (typeof OBSERVED)[number];
 
 type SourceType = "camera" | "screen" | "file";
 
-type HangPublishProps<TChildren = unknown> = {
-	[K in Observed]?: string | number | boolean;
-} & {
-	children?: TChildren;
-};
-
 // Close everything when this element is garbage collected.
 // This is primarily to avoid a console.warn that we didn't close() before GC.
 // There's no destructor for web components so this is the best we can do.
 const cleanup = new FinalizationRegistry<Effect>((signals) => signals.close());
 
+/**
+ * @tag hang-publish
+ * @summary Publish live video streams over Media over QUIC (MOQ)
+ * @description A custom element that captures and publishes video/audio streams over the Media over QUIC protocol.
+ * Supports multiple input sources including camera, screen sharing, and file playback. Handles encoding,
+ * transmission, and connection management to MOQ relay servers. Includes optional preview via video element.
+ *
+ * @attr {string} url - The WebTransport URL of the MOQ relay server (e.g., "https://relay.example.com")
+ * @attr {string} path - The broadcast path to publish to (e.g., "/live/mystream")
+ * @attr {string} source - Input source type: "camera", "screen", or "file"
+ * @attr {boolean} muted - Whether audio is muted (disables audio track)
+ * @attr {boolean} invisible - Whether video is disabled (disables video track)
+ *
+ * @slot default - Optional video element for local preview of the published stream
+ *
+ * @example HTML with camera
+ * ```html
+ * <hang-publish url="https://relay.example.com" path="/live/mystream" source="camera">
+ *   <video autoplay muted style="width: 320px; height: 240px;"></video>
+ * </hang-publish>
+ * ```
+ *
+ * @example HTML with screen sharing
+ * ```html
+ * <hang-publish url="https://relay.example.com" path="/presentation" source="screen">
+ *   <video autoplay muted style="width: 640px; height: 360px;"></video>
+ * </hang-publish>
+ * ```
+ *
+ * @example React
+ * ```tsx
+ * import '@moq/hang/publish/element';
+ * import { HangPublish } from '@moq/hang/react';
+ *
+ * export function HangPublishComponent({ url, path }) {
+ *   return (
+ *     <HangPublish url={url} path={path}>
+ *       <video autoplay muted style={{ width: '320px', height: '240px' }} />
+ *     </HangPublish>
+ *   );
+ * }
+ * ```
+ */
 export default class HangPublish extends HTMLElement {
 	static observedAttributes = OBSERVED;
 
@@ -246,24 +283,5 @@ export default class HangPublish extends HTMLElement {
 }
 
 customElements.define("hang-publish", HangPublish);
-
-declare global {
-	interface HTMLElementTagNameMap {
-		"hang-publish": HangPublish;
-	}
-	namespace JSX {
-		interface IntrinsicElements {
-			"hang-publish": HangPublishProps;
-		}
-	}
-}
-
-declare module "react" {
-	namespace JSX {
-		interface IntrinsicElements {
-			"hang-publish": HangPublishProps;
-		}
-	}
-}
 
 export { HangPublish };

@@ -5,7 +5,7 @@
  * Runs enabled generators in sequence and tracks performance.
  *
  * To add a new framework:
- * 1. Create a new generator in scripts/generators/<framework>.ts
+ * 1. Create a new generator in generators/<framework>.ts
  * 2. Export a generate<Framework>Wrappers(basePath) function
  * 3. Add it to the generators array below
  */

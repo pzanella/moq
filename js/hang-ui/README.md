@@ -109,125 +109,88 @@ Common components and utilities used across the package.
 
 ## Build System & Code Generation
 
-This package uses Custom Elements Manifest (CEM) to automatically generate framework-specific wrappers from Web Component definitions.
+This package uses Custom Elements Manifest (CEM) to automatically generate framework-specific wrappers.
 
 ### How It Works
 
-**Source files** → **CEM analysis** → **Wrapper generation** → **Framework components**
-
-Web Components in `src/publish/` and `src/watch/` are analyzed to extract their API (props, events, slots), then wrapper generators create framework-specific components with full TypeScript support and documentation.
+1. **CEM analysis** (`cem analyze`) scans Web Components and creates `custom-elements.json`
+2. **JSDoc enhancement** extracts `@tag`, `@summary`, `@example` from source files
+3. **Wrapper generation** creates typed framework components in `src/wrappers/<framework>/`
 
 ### Available Scripts
 
-#### `bun run prebuild`
+```bash
+bun run prebuild   # Generate CEM + framework wrappers
+bun run build      # Build package with Vite + TypeScript declarations
+```
 
-Generates framework wrappers from Web Components:
-
-1. **Analyzes source files** with `cem analyze`
-   - Scans Web Components in src/
-   - Extracts metadata (attributes, properties, events, slots)
-   - Creates `custom-elements.json` manifest
-
-2. **Enhances with JSDoc** from source comments
-   - Reads `@tag`, `@summary`, `@description` annotations
-   - Extracts `@example` code blocks (HTML, React, etc.)
-   - Merges enhanced metadata into the manifest
-
-3. **Generates wrappers** for enabled frameworks
-   - Creates `src/wrappers/react/index.ts` with typed React components
-   - Includes complete JSDoc documentation with examples
-   - Adds TypeScript definitions for JSX intrinsic elements
-   - **Note**: This file is auto-generated and not committed to git (see `.gitignore`)
-
-#### `bun run build`
-
-Compiles and bundles the entire package:
-
-1. Cleans previous build artifacts
-2. Runs Vite build with:
-   - JavaScript bundling (Web Components + framework wrappers)
-   - **Automatic TypeScript declaration generation** via `vite-plugin-dts`
-3. Copies `custom-elements.json` to dist/
-4. Updates package.json exports with proper type paths
-
-### Scripts Directory Structure
+The code generator lives in `../scripts/element-wrappers/`:
 
 ```
-scripts/
-├── generate-wrappers.ts  # Main entry point - orchestrates all generators
+element-wrappers/
+├── index.ts              # Orchestrator - runs all enabled generators
 ├── generators/
 │   └── react.ts          # React wrapper generator
 └── utils/
-    ├── manifest.ts       # CEM loader and JSDoc metadata extraction
-    ├── codegen.ts        # Code generation utilities (JSDoc, formatting)
-    └── types.ts          # TypeScript type definitions
+    ├── manifest.ts       # CEM loader + JSDoc extraction
+    ├── codegen.ts        # JSDoc + code formatting
+    └── types.ts          # TypeScript interfaces
 ```
 
 ### React Wrappers
 
-React components are automatically generated and exported from `@moq/hang-ui/react`:
+Auto-generated from CEM, exported from `@moq/hang-ui/react`:
 
-```typescript
+```tsx
 import { HangWatchUI, HangPublishUI } from '@moq/hang-ui/react';
-import '@moq/hang/watch/element';
-import '@moq/hang-ui/watch';
 
-export function VideoPlayer() {
-  return (
-    <HangWatchUI>
-      <hang-watch url="..." path="...">
-        <canvas />
-      </hang-watch>
-    </HangWatchUI>
-  );
-}
+<HangWatchUI>
+  <hang-watch url="..." path="...">
+    <canvas />
+  </hang-watch>
+</HangWatchUI>
 ```
 
-✨ **Full TypeScript support** - Components include JSDoc with examples and proper type definitions.
+### Generating Wrappers for Other Frameworks
 
-### Adding a New Framework Wrapper
+To add Vue, Angular, or other frameworks:
 
 #### 1. Create Generator
 
-Create `scripts/generators/vue.ts`:
+Create `../scripts/element-wrappers/generators/vue.ts`:
 
-```typescript
+```ts
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { extractCustomElements, loadManifest, tagNameToComponentName } from "../utils/manifest";
 import { formatCode, generateJSDoc } from "../utils/codegen";
-import type { CustomElement } from "../utils/types";
 
-function generateVueComponent(element: CustomElement): string {
-  const componentName = tagNameToComponentName(element.tagName);
+function generateVueComponent(element) {
+  const name = tagNameToComponentName(element.tagName);
   const jsDoc = generateJSDoc(
-    element.summary,
-    element.description,
-    element.slots,
-    element.events,
-    element.attributes,
-    element.properties,
-    element.examples,
+    element.summary, element.description,
+    element.slots, element.events,
+    element.attributes, element.properties,
+    element.examples
   );
 
   return `${jsDoc}
-export const ${componentName} = defineComponent({
-  name: '${componentName}',
+export const ${name} = defineComponent({
+  name: '${name}',
   template: '<${element.tagName}><slot /></${element.tagName}>',
-});
-`;
+});`;
 }
 
-export function generateVueWrappers(basePath: string = process.cwd()): void {
+export function generateVueWrappers(basePath = process.cwd()) {
   console.log("\n🔧 Generating Vue wrappers...");
-
+  
   const manifest = loadManifest(basePath);
   const elements = extractCustomElements(manifest);
-
   if (elements.length === 0) return;
 
-  const components = elements.map(generateVueComponent).join("\n");
-  const output = `import { defineComponent } from 'vue';\n\n${components}`;
+  const output = `import { defineComponent } from 'vue';\n\n${
+    elements.map(generateVueComponent).join("\n")
+  }`;
 
   const outputDir = join(basePath, "src", "wrappers", "vue");
   mkdirSync(outputDir, { recursive: true });
@@ -239,25 +202,18 @@ export function generateVueWrappers(basePath: string = process.cwd()): void {
 
 #### 2. Register Generator
 
-In `scripts/generate-wrappers.ts`:
+In `../scripts/element-wrappers/index.ts`:
 
-```typescript
+```ts
 import { generateVueWrappers } from "./generators/vue";
 
-const generators: Generator[] = [
+const generators = [
   { name: "React", fn: generateReactWrappers, enabled: true },
   { name: "Vue", fn: generateVueWrappers, enabled: true },
 ];
 ```
 
-#### 3. Update Build Configuration
-
-**vite.config.ts** - Add entry point:
-```typescript
-entry: {
-  "wrappers/vue/index": resolve(__dirname, "src/wrappers/vue/index.ts"),
-}
-```
+#### 3. Update Package Configuration
 
 **package.json** - Add export:
 ```json
@@ -271,43 +227,20 @@ entry: {
 }
 ```
 
-#### 4. Run Generation
+**vite.config.ts** - Add build entry:
+```ts
+entry: {
+  "wrappers/vue/index": resolve(__dirname, "src/wrappers/vue/index.ts"),
+}
+```
+
+#### 4. Run
 
 ```bash
-bun run prebuild    # Generates src/wrappers/vue/index.ts
-bun run build       # Compiles and creates dist/
+bun run prebuild  # Generates src/wrappers/vue/index.ts
+bun run build     # Compiles to dist/
 ```
 
-### JSDoc Annotations
-
-Add metadata to Web Components with JSDoc:
-
-```typescript
-/**
- * @tag hang-watch-ui
- * @summary Watch video stream with full UI controls
- * @description Complete player UI for MOQ live streams
- *
- * @example HTML
- * ```html
- * <hang-watch-ui>
- *   <hang-watch url="wss://relay.example.com">
- *     <canvas></canvas>
- *   </hang-watch>
- * </hang-watch-ui>
- * ```
- *
- * @example React
- * ```tsx
- * <HangWatchUI>
- *   <hang-watch url="wss://relay.example.com">
- *     <canvas />
- *   </hang-watch>
- * </HangWatchUI>
- * ```
- */
-```
-
-**Supported tags:** `@tag`, `@summary`, `@description`, `@slot`, `@example <Label>`
+For more details, see [`../scripts/element-wrappers/README.md`](../scripts/element-wrappers/README.md).
 
 ---
