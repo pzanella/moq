@@ -39,46 +39,53 @@ impl QuicheClient {
 			anyhow::bail!("fingerprint verification (http:// scheme) is not supported with the quiche backend");
 		}
 
-		let alpn = match url.scheme() {
-			"https" => web_transport_quiche::ALPN,
-			"moql" => moq_lite::lite::ALPN,
-			"moqt" => moq_lite::ietf::ALPN,
-			_ => anyhow::bail!("url scheme must be 'https' or 'moql'"),
+		let alpns = match url.scheme() {
+			"https" => vec![web_transport_quiche::ALPN.as_bytes().to_vec()],
+			"moqt" | "moql" => moq_lite::alpns().iter().map(|alpn| alpn.as_bytes().to_vec()).collect(),
+			_ => anyhow::bail!("url scheme must be 'https', 'moqt', or 'moql'"),
 		};
 
 		let mut settings = web_transport_quiche::Settings::default();
 		settings.verify_peer = !self.disable_verify;
+		settings.alpn = alpns;
 
 		let builder = web_transport_quiche::ez::ClientBuilder::default()
 			.with_settings(settings)
 			.with_bind(self.bind)?;
 
-		tracing::debug!(%url, %alpn, "connecting via quiche");
+		tracing::debug!(%url, "connecting via quiche");
 
-		match alpn {
-			web_transport_quiche::ALPN => {
+		let mut request = web_transport_quiche::proto::ConnectRequest::new(url.clone());
+		for alpn in moq_lite::alpns() {
+			request = request.with_protocol(alpn.to_string());
+		}
+
+		match url.scheme() {
+			"https" => {
 				// WebTransport over HTTP/3
 				let conn = builder
 					.connect(&host, port)
 					.await
-					.map_err(|e| anyhow::anyhow!("quiche connect failed: {e}"))?;
-				let session = web_transport_quiche::Connection::connect(conn, url)
+					.context("failed to connect to quiche server")?;
+				let session = web_transport_quiche::Connection::connect(conn, request)
 					.await
-					.map_err(|e| anyhow::anyhow!("WebTransport handshake failed: {e}"))?;
+					.context("failed to connect to quiche server")?;
 				Ok(session)
 			}
-			_ => {
+			"moqt" | "moql" => {
 				// Raw QUIC mode
 				let conn = builder
 					.connect(&host, port)
 					.await
-					.map_err(|e| anyhow::anyhow!("quiche connect failed: {e}"))?;
-				Ok(web_transport_quiche::Connection::raw(
-					conn,
-					url,
-					web_transport_quiche::proto::ConnectResponse::OK,
-				))
+					.context("failed to connect to quiche server")?;
+
+				let alpn = conn.alpn().context("missing ALPN")?;
+				let alpn = std::str::from_utf8(&alpn).context("failed to decode ALPN")?;
+
+				let response = web_transport_quiche::proto::ConnectResponse::OK.with_protocol(alpn);
+				Ok(web_transport_quiche::Connection::raw(conn, request, response))
 			}
+			_ => unreachable!("unsupported URL scheme: {}", url.scheme()),
 		}
 	}
 }
@@ -127,17 +134,19 @@ impl QuicheServer {
 			fingerprints,
 		}));
 
-		let alpn = vec![
-			b"h3".to_vec(),
-			moq_lite::lite::ALPN.as_bytes().to_vec(),
-			moq_lite::ietf::ALPN.as_bytes().to_vec(),
-		];
+		let mut alpns = vec![b"h3".to_vec()];
+		for alpn in moq_lite::alpns() {
+			alpns.push(alpn.as_bytes().to_vec());
+		}
+
+		let mut settings = web_transport_quiche::Settings::default();
+		settings.alpn = alpns;
 
 		let server = web_transport_quiche::ez::ServerBuilder::default()
-			.with_alpn(alpn)
+			.with_settings(settings)
 			.with_bind(listen)?
 			.with_single_cert(chain, key)
-			.map_err(|e| anyhow::anyhow!("failed to create quiche server: {e}"))?;
+			.context("failed to create quiche server")?;
 
 		Ok(Self {
 			server,
@@ -247,10 +256,10 @@ impl QuicheRequest {
 				// WebTransport over HTTP/3
 				let request = web_transport_quiche::h3::Request::accept(conn)
 					.await
-					.map_err(|e| anyhow::anyhow!("failed to accept WebTransport request: {e}"))?;
+					.context("failed to accept WebTransport request")?;
 				Ok(Self::WebTransport { request })
 			}
-			moq_lite::lite::ALPN | moq_lite::ietf::ALPN => Ok(Self::Raw {
+			alpn if moq_lite::alpns().contains(&alpn) => Ok(Self::Raw {
 				connection: conn,
 				request: ConnectRequest::new("moqt://".to_string().parse::<Url>().unwrap()),
 				response: web_transport_quiche::proto::ConnectResponse::OK.with_protocol(alpn),

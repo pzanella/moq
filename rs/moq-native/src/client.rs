@@ -289,9 +289,11 @@ impl Client {
 	#[cfg(feature = "iroh")]
 	async fn connect_iroh(&self, url: Url) -> anyhow::Result<web_transport_iroh::Session> {
 		let endpoint = self.iroh.as_ref().context("Iroh support is not enabled")?;
+		// TODO Support multiple ALPNs
 		let alpn = match url.scheme() {
 			"moql+iroh" | "iroh" => moq_lite::lite::ALPN,
-			"moqt+iroh" => moq_lite::ietf::ALPN,
+			"moqt+iroh" => moq_lite::ietf::ALPN_14,
+			"moqt-15+iroh" => moq_lite::ietf::ALPN_15,
 			"h3+iroh" => web_transport_iroh::ALPN_H3,
 			_ => anyhow::bail!("Invalid URL: unknown scheme"),
 		};

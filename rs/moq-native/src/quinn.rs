@@ -79,35 +79,45 @@ impl QuinnClient {
 			url.set_scheme("https").expect("failed to set scheme");
 		}
 
-		let alpn = match url.scheme() {
-			"https" => web_transport_quinn::ALPN,
-			"moql" => moq_lite::lite::ALPN,
-			"moqt" => moq_lite::ietf::ALPN,
-			_ => anyhow::bail!("url scheme must be 'http', 'https', or 'moql'"),
+		let alpns = match url.scheme() {
+			"https" => vec![web_transport_quinn::ALPN.as_bytes().to_vec()],
+			"moqt" | "moql" => moq_lite::alpns().iter().map(|alpn| alpn.as_bytes().to_vec()).collect(),
+			_ => anyhow::bail!("url scheme must be 'https', 'moqt', or 'moql'"),
 		};
 
-		// TODO support connecting to both ALPNs at the same time
-		config.alpn_protocols = vec![alpn.as_bytes().to_vec()];
+		config.alpn_protocols = alpns;
 		config.key_log = Arc::new(rustls::KeyLogFile::new());
 
 		let config: quinn::crypto::rustls::QuicClientConfig = config.try_into()?;
 		let mut config = quinn::ClientConfig::new(Arc::new(config));
 		config.transport_config(self.transport.clone());
 
-		tracing::debug!(%url, %ip, %alpn, "connecting");
+		tracing::debug!(%url, %ip, "connecting");
 
 		let connection = self.quic.connect_with(config, ip, &host)?.await?;
 		tracing::Span::current().record("id", connection.stable_id());
 
-		let request = web_transport_quinn::proto::ConnectRequest::new(url).with_protocol(alpn);
+		let mut request = web_transport_quinn::proto::ConnectRequest::new(url.clone());
+		for alpn in moq_lite::alpns() {
+			request = request.with_protocol(alpn.to_string());
+		}
 
-		let session = match alpn {
-			web_transport_quinn::ALPN => web_transport_quinn::Session::connect(connection, request).await?,
-			moq_lite::lite::ALPN | moq_lite::ietf::ALPN => {
+		let session = match url.scheme() {
+			"https" => web_transport_quinn::Session::connect(connection, request).await?,
+			"moqt" | "moql" => {
+				let handshake = connection
+					.handshake_data()
+					.context("missing handshake data")?
+					.downcast::<quinn::crypto::rustls::HandshakeData>()
+					.unwrap();
+
+				let alpn = handshake.protocol.context("missing ALPN")?;
+				let alpn = String::from_utf8(alpn).context("failed to decode ALPN")?;
+
 				let response = web_transport_quinn::proto::ConnectResponse::OK.with_protocol(alpn);
 				web_transport_quinn::Session::raw(connection, request, response)
 			}
-			_ => unreachable!("ALPN was checked above"),
+			_ => anyhow::bail!("unsupported URL scheme: {}", url.scheme()),
 		};
 
 		Ok(session)
@@ -199,11 +209,12 @@ impl QuinnServer {
 			.with_no_client_auth()
 			.with_cert_resolver(certs.clone());
 
-		tls.alpn_protocols = vec![
-			web_transport_quinn::ALPN.as_bytes().to_vec(),
-			moq_lite::lite::ALPN.as_bytes().to_vec(),
-			moq_lite::ietf::ALPN.as_bytes().to_vec(),
-		];
+		let mut alpns = vec![web_transport_quinn::ALPN.as_bytes().to_vec()];
+		for alpn in moq_lite::alpns() {
+			alpns.push(alpn.as_bytes().to_vec());
+		}
+
+		tls.alpn_protocols = alpns;
 		tls.key_log = Arc::new(rustls::KeyLogFile::new());
 
 		let tls: quinn::crypto::rustls::QuicServerConfig = tls.try_into()?;
@@ -302,7 +313,7 @@ impl QuinnRequest {
 					.context("failed to receive WebTransport request")?;
 				Ok(Self::WebTransport { request })
 			}
-			moq_lite::lite::ALPN | moq_lite::ietf::ALPN => {
+			alpn if moq_lite::alpns().contains(&alpn) => {
 				let url = format!("moqt://{}", host).parse::<Url>().unwrap();
 				let request = web_transport_quinn::proto::ConnectRequest::new(url);
 				let response = web_transport_quinn::proto::ConnectResponse::OK.with_protocol(alpn);
