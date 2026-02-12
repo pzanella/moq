@@ -5,6 +5,7 @@ use std::sync::Arc;
 /// This enum represents all possible errors that can occur when working with
 /// hang media streams, codecs, and containers.
 #[derive(Debug, thiserror::Error, Clone)]
+#[non_exhaustive]
 pub enum Error {
 	/// An error from the underlying MoQ transport layer.
 	#[error("moq lite error: {0}")]
@@ -14,33 +15,9 @@ pub enum Error {
 	#[error("json error: {0}")]
 	Json(Arc<serde_json::Error>),
 
-	/// Attempted to add a track that already exists in the catalog.
-	#[error("duplicate track")]
-	DuplicateTrack,
-
-	/// Referenced track was not found in the catalog.
-	#[error("missing track")]
-	MissingTrack,
-
-	/// The provided session ID is invalid or malformed.
-	#[error("invalid session ID")]
-	InvalidSession,
-
-	/// Attempted to process an empty group (no frames).
-	#[error("empty group")]
-	EmptyGroup,
-
 	/// The specified codec is invalid or malformed.
 	#[error("invalid codec")]
 	InvalidCodec,
-
-	/// The frame data is invalid or corrupted.
-	#[error("invalid frame")]
-	InvalidFrame,
-
-	/// The codec is not supported by this implementation.
-	#[error("unsupported codec")]
-	UnsupportedCodec,
 
 	/// Failed to parse an integer value.
 	#[error("expected int")]
@@ -66,6 +43,7 @@ pub enum Error {
 	#[error("url parse error: {0}")]
 	Url(#[from] url::ParseError),
 
+	/// The format is not recognized.
 	#[error("unknown format: {0}")]
 	UnknownFormat(String),
 }
