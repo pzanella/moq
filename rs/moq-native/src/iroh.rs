@@ -6,6 +6,8 @@ use web_transport_iroh::{
 	http,
 	iroh::{self, SecretKey},
 };
+// NOTE: web-transport-iroh should re-export proto like web-transport-quinn does.
+use web_transport_proto::{ConnectRequest, ConnectResponse};
 
 pub use iroh::Endpoint as IrohEndpoint;
 
@@ -67,17 +69,16 @@ impl IrohEndpointConfig {
 			SecretKey::generate(&mut rand::rng())
 		};
 
-		let mut alpns = vec![web_transport_iroh::ALPN_H3.as_bytes().to_vec()];
-		for alpn in moq_lite::ALPNS {
-			alpns.push(alpn.as_bytes().to_vec());
-		}
+		// H3 is last because it requires WebTransport framing which not all H3 endpoints support.
+		let mut alpns: Vec<Vec<u8>> = moq_lite::ALPNS.iter().map(|alpn| alpn.as_bytes().to_vec()).collect();
+		alpns.push(web_transport_iroh::ALPN_H3.as_bytes().to_vec());
 
 		let mut builder = IrohEndpoint::builder().secret_key(secret_key).alpns(alpns);
 		if let Some(addr) = self.bind_v4 {
-			builder = builder.bind_addr_v4(addr);
+			builder = builder.bind_addr(addr)?;
 		}
 		if let Some(addr) = self.bind_v6 {
-			builder = builder.bind_addr_v6(addr);
+			builder = builder.bind_addr(addr)?;
 		}
 
 		let endpoint = builder.bind().await?;
@@ -87,17 +88,9 @@ impl IrohEndpointConfig {
 	}
 }
 
-/// URL schemes supported for connecting to iroh endpoints.
-pub const IROH_SCHEMES: [&str; 5] = ["iroh", "moql+iroh", "moqt+iroh", "moqt-15+iroh", "h3+iroh"];
-
-/// Returns `true` if `url` has a scheme included in [`IROH_SCHEMES`].
-pub fn is_iroh_url(url: &Url) -> bool {
-	IROH_SCHEMES.contains(&url.scheme())
-}
-
 pub enum IrohRequest {
 	Quic {
-		connection: iroh::endpoint::Connection,
+		request: web_transport_iroh::QuicRequest,
 	},
 	WebTransport {
 		request: Box<web_transport_iroh::H3Request>,
@@ -119,7 +112,9 @@ impl IrohRequest {
 					request: Box::new(request),
 				})
 			}
-			alpn if moq_lite::ALPNS.contains(&alpn) => Ok(Self::Quic { connection: conn }),
+			alpn if moq_lite::ALPNS.contains(&alpn) => Ok(Self::Quic {
+				request: web_transport_iroh::QuicRequest::accept(conn),
+			}),
 			_ => Err(anyhow::anyhow!("unsupported ALPN: {alpn}")),
 		}
 	}
@@ -127,26 +122,32 @@ impl IrohRequest {
 	/// Accept the session.
 	pub async fn ok(self) -> Result<web_transport_iroh::Session, web_transport_iroh::ServerError> {
 		match self {
-			IrohRequest::Quic { connection, .. } => Ok(web_transport_iroh::Session::raw(connection)),
-			IrohRequest::WebTransport { request } => request.ok().await,
+			IrohRequest::Quic { request } => Ok(request.ok()),
+			IrohRequest::WebTransport { request } => {
+				let mut response = ConnectResponse::OK;
+				if let Some(protocol) = request.protocols.first() {
+					response = response.with_protocol(protocol);
+				}
+				request.respond(response).await
+			}
 		}
 	}
 
 	/// Reject the session.
 	pub async fn close(self, status: http::StatusCode) -> Result<(), web_transport_iroh::ServerError> {
 		match self {
-			IrohRequest::Quic { connection, .. } => {
-				let _: () = connection.close(status.as_u16().into(), status.as_str().as_bytes());
+			IrohRequest::Quic { request } => {
+				request.close(status);
 				Ok(())
 			}
-			IrohRequest::WebTransport { request, .. } => request.close(status).await,
+			IrohRequest::WebTransport { request, .. } => request.reject(status).await,
 		}
 	}
 
 	pub fn url(&self) -> Option<&Url> {
 		match self {
 			IrohRequest::Quic { .. } => None,
-			IrohRequest::WebTransport { request } => Some(request.url()),
+			IrohRequest::WebTransport { request } => Some(&request.url),
 		}
 	}
 }
@@ -155,10 +156,15 @@ pub(crate) async fn connect(endpoint: &IrohEndpoint, url: Url) -> anyhow::Result
 	let host = url.host().context("Invalid URL: missing host")?.to_string();
 	let endpoint_id: iroh::EndpointId = host.parse().context("Invalid URL: host is not an iroh endpoint id")?;
 
-	// We need to use this API to provide multiple ALPNs
-	let alpn = b"h3";
-	let opts = iroh::endpoint::ConnectOptions::new()
-		.with_additional_alpns(moq_lite::ALPNS.iter().map(|alpn| alpn.as_bytes().to_vec()).collect());
+	// We need to use this API to provide multiple ALPNs.
+	// H3 is last because it requires WebTransport framing which not all H3 endpoints support.
+	let alpn = moq_lite::ALPNS[0].as_bytes();
+	let mut additional: Vec<Vec<u8>> = moq_lite::ALPNS[1..]
+		.iter()
+		.map(|alpn| alpn.as_bytes().to_vec())
+		.collect();
+	additional.push(b"h3".to_vec());
+	let opts = iroh::endpoint::ConnectOptions::new().with_additional_alpns(additional);
 
 	let mut connecting = endpoint.connect_with_opts(endpoint_id, alpn, opts).await?;
 	let alpn = connecting.alpn().await?;
@@ -168,11 +174,16 @@ pub(crate) async fn connect(endpoint: &IrohEndpoint, url: Url) -> anyhow::Result
 		web_transport_iroh::ALPN_H3 => {
 			let conn = connecting.await?;
 			let url = url_set_scheme(url, "https")?;
-			web_transport_iroh::Session::connect_h3(conn, url).await?
+
+			let mut request = ConnectRequest::new(url);
+			for alpn in moq_lite::ALPNS {
+				request = request.with_protocol(alpn.to_string());
+			}
+
+			web_transport_iroh::Session::connect_h3(conn, request).await?
 		}
 		alpn if moq_lite::ALPNS.contains(&alpn) => {
 			let conn = connecting.await?;
-			// TODO: Add support for ALPNs.
 			web_transport_iroh::Session::raw(conn)
 		}
 		_ => anyhow::bail!("unsupported ALPN: {alpn}"),

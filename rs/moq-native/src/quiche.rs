@@ -138,10 +138,9 @@ impl QuicheServer {
 			fingerprints,
 		}));
 
-		let mut alpns = vec![b"h3".to_vec()];
-		for alpn in moq_lite::ALPNS {
-			alpns.push(alpn.as_bytes().to_vec());
-		}
+		// H3 is last because it requires WebTransport framing which not all H3 endpoints support.
+		let mut alpns: Vec<Vec<u8>> = moq_lite::ALPNS.iter().map(|alpn| alpn.as_bytes().to_vec()).collect();
+		alpns.push(b"h3".to_vec());
 
 		let max_streams = config.max_streams.unwrap_or(crate::DEFAULT_MAX_STREAMS);
 
