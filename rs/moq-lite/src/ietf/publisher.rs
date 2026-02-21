@@ -43,7 +43,17 @@ impl<S: web_transport_trait::Session> Publisher<S> {
 		// Track request_id → namespace mapping for v16 PublishNamespaceDone
 		let mut namespace_requests: HashMap<crate::PathOwned, RequestId> = HashMap::new();
 
-		while let Some((path, active)) = self.origin.announced().await {
+		loop {
+			let announced = tokio::select! {
+				biased;
+				_ = self.session.closed() => return Ok(()),
+				announced = self.origin.announced() => announced,
+			};
+
+			let Some((path, active)) = announced else {
+				break;
+			};
+
 			let suffix = path.to_owned();
 
 			if active.is_some() {
@@ -67,6 +77,16 @@ impl<S: web_transport_trait::Session> Publisher<S> {
 					tracing::warn!(broadcast = %self.origin.absolute(&path), "unannounce for unknown namespace");
 				}
 			}
+		}
+
+		// Flush pending PublishNamespaceDone for any remaining active namespaces.
+		for (suffix, request_id) in namespace_requests {
+			self.control
+				.send(ietf::PublishNamespaceDone {
+					track_namespace: suffix,
+					request_id,
+				})
+				.ok();
 		}
 
 		Ok(())
@@ -189,7 +209,7 @@ impl<S: web_transport_trait::Session> Publisher<S> {
 			let group = tokio::select! {
 				biased;
 				_ = &mut cancel => return Ok(()),
-				_ = session.closed() => return Err(Error::Transport),
+				_ = session.closed() => return Ok(()),
 				Some(group) = track.next_group().transpose() => group,
 				Some(_) = async { Some(old_group.as_mut()?.await) } => {
 					old_group = None;
