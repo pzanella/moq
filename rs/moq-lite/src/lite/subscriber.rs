@@ -11,7 +11,6 @@ use crate::{
 	model::BroadcastProducer,
 };
 
-use tokio::sync::oneshot;
 use web_async::Lock;
 
 #[derive(Clone)]
@@ -35,10 +34,9 @@ impl<S: web_transport_trait::Session> Subscriber<S> {
 		}
 	}
 
-	/// Send a signal when the subscriber is initialized.
-	pub async fn run(self, init: oneshot::Sender<()>) -> Result<(), Error> {
+	pub async fn run(self) -> Result<(), Error> {
 		tokio::select! {
-			Err(err) = self.clone().run_announce(init) => Err(err),
+			Err(err) = self.clone().run_announce() => Err(err),
 			res = self.run_uni() => res,
 		}
 	}
@@ -72,10 +70,9 @@ impl<S: web_transport_trait::Session> Subscriber<S> {
 		Ok(())
 	}
 
-	async fn run_announce(mut self, init: oneshot::Sender<()>) -> Result<(), Error> {
+	async fn run_announce(mut self) -> Result<(), Error> {
 		if self.origin.is_none() {
 			// Don't do anything if there's no origin configured.
-			let _ = init.send(());
 			return Ok(());
 		}
 
@@ -91,19 +88,24 @@ impl<S: web_transport_trait::Session> Subscriber<S> {
 
 		let mut producers = HashMap::new();
 
-		let msg: lite::AnnounceInit = stream.reader.decode().await?;
-		for path in msg.suffixes {
-			self.start_announce(path, &mut producers)?;
+		match self.version {
+			Version::Draft01 | Version::Draft02 => {
+				let msg: lite::AnnounceInit = stream.reader.decode().await?;
+				for path in msg.suffixes {
+					self.start_announce(path, &mut producers)?;
+				}
+			}
+			Version::Draft03 => {
+				// Draft03: no AnnounceInit, initial state comes via Announce messages.
+			}
 		}
-
-		let _ = init.send(());
 
 		while let Some(announce) = stream.reader.decode_maybe::<lite::Announce>().await? {
 			match announce {
-				lite::Announce::Active { suffix: path } => {
+				lite::Announce::Active { suffix: path, .. } => {
 					self.start_announce(path, &mut producers)?;
 				}
-				lite::Announce::Ended { suffix: path } => {
+				lite::Announce::Ended { suffix: path, .. } => {
 					tracing::debug!(broadcast = %self.log_path(&path), "unannounced");
 
 					// Close the producer.
@@ -177,6 +179,10 @@ impl<S: web_transport_trait::Session> Subscriber<S> {
 			broadcast: broadcast.to_owned(),
 			track: (&track.info.name).into(),
 			priority: track.info.priority,
+			ordered: true,
+			max_latency: std::time::Duration::ZERO,
+			start_group: None,
+			end_group: None,
 		};
 
 		tracing::info!(id, broadcast = %self.log_path(&broadcast), track = %track.info.name, "subscribe started");
@@ -222,10 +228,13 @@ impl<S: web_transport_trait::Session> Subscriber<S> {
 	) -> Result<(), Error> {
 		stream.writer.encode(&msg).await?;
 
-		// TODO use the response correctly populate the track info
-		let _info: lite::SubscribeOk = stream.reader.decode().await?;
+		// The first response MUST be a SUBSCRIBE_OK.
+		let resp: lite::SubscribeResponse = stream.reader.decode().await?;
+		let lite::SubscribeResponse::Ok(_info) = resp else {
+			return Err(Error::ProtocolViolation);
+		};
 
-		// Wait until the stream is closed
+		// TODO handle additional SUBSCRIBE_OK and SUBSCRIBE_DROP messages.
 		stream.reader.closed().await?;
 
 		Ok(())
