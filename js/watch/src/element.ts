@@ -5,9 +5,7 @@ import { MultiBackend } from "./backend";
 import { Broadcast } from "./broadcast";
 import { Sync } from "./sync";
 
-// TODO remove name; replaced with path
-// TODO remove latency; replaced with buffer
-const OBSERVED = ["url", "name", "path", "paused", "volume", "muted", "reload", "jitter", "latency"] as const;
+const OBSERVED = ["url", "name", "paused", "volume", "muted", "reload", "jitter"] as const;
 type Observed = (typeof OBSERVED)[number];
 
 // Close everything when this element is garbage collected.
@@ -87,11 +85,11 @@ export default class MoqWatch extends HTMLElement {
 		});
 
 		this.signals.run((effect) => {
-			const broadcast = effect.get(this.broadcast.path);
-			if (broadcast) {
-				this.setAttribute("path", broadcast.toString());
+			const name = effect.get(this.broadcast.name);
+			if (name) {
+				this.setAttribute("name", name.toString());
 			} else {
-				this.removeAttribute("path");
+				this.removeAttribute("name");
 			}
 		});
 
@@ -144,8 +142,8 @@ export default class MoqWatch extends HTMLElement {
 
 		if (name === "url") {
 			this.connection.url.set(newValue ? new URL(newValue) : undefined);
-		} else if (name === "name" || name === "path") {
-			this.broadcast.path.set(newValue ? Moq.Path.from(newValue) : undefined);
+		} else if (name === "name") {
+			this.broadcast.name.set(newValue ? Moq.Path.from(newValue) : undefined);
 		} else if (name === "paused") {
 			this.backend.paused.set(newValue !== null);
 		} else if (name === "volume") {
@@ -155,8 +153,7 @@ export default class MoqWatch extends HTMLElement {
 			this.backend.audio.muted.set(newValue !== null);
 		} else if (name === "reload") {
 			this.broadcast.reload.set(newValue !== null);
-		} else if (name === "jitter" || name === "latency") {
-			// "latency" is a legacy alias for "jitter"
+		} else if (name === "jitter") {
 			this.backend.jitter.set((newValue ? Number.parseFloat(newValue) : 100) as Time.Milli);
 		} else {
 			const exhaustive: never = name;
@@ -172,12 +169,12 @@ export default class MoqWatch extends HTMLElement {
 		this.connection.url.set(value ? new URL(value) : undefined);
 	}
 
-	get path(): Moq.Path.Valid | undefined {
-		return this.broadcast.path.peek();
+	get name(): Moq.Path.Valid | undefined {
+		return this.broadcast.name.peek();
 	}
 
-	set path(value: string | Moq.Path.Valid | undefined) {
-		this.broadcast.path.set(value ? Moq.Path.from(value) : undefined);
+	set name(value: string | Moq.Path.Valid | undefined) {
+		this.broadcast.name.set(value ? Moq.Path.from(value) : undefined);
 	}
 
 	get paused(): boolean {

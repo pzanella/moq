@@ -3,8 +3,7 @@ import { Effect, Signal } from "@moq/signals";
 import { Broadcast } from "./broadcast";
 import * as Source from "./source";
 
-// TODO remove name; replaced with path
-const OBSERVED = ["url", "name", "path", "muted", "invisible", "source"] as const;
+const OBSERVED = ["url", "name", "muted", "invisible", "source"] as const;
 type Observed = (typeof OBSERVED)[number];
 
 type SourceType = "camera" | "screen" | "file";
@@ -126,8 +125,8 @@ export default class MoqPublish extends HTMLElement {
 
 		if (name === "url") {
 			this.connection.url.set(newValue ? new URL(newValue) : undefined);
-		} else if (name === "name" || name === "path") {
-			this.broadcast.path.set(newValue ? Moq.Path.from(newValue) : undefined);
+		} else if (name === "name") {
+			this.broadcast.name.set(newValue ? Moq.Path.from(newValue) : undefined);
 		} else if (name === "source") {
 			if (newValue === "camera" || newValue === "screen" || newValue === "file" || newValue === null) {
 				this.state.source.set(newValue as SourceType | undefined);
@@ -228,12 +227,12 @@ export default class MoqPublish extends HTMLElement {
 		this.connection.url.set(value ? new URL(value) : undefined);
 	}
 
-	get path(): Moq.Path.Valid | undefined {
-		return this.broadcast.path.peek();
+	get name(): Moq.Path.Valid | undefined {
+		return this.broadcast.name.peek();
 	}
 
-	set path(value: string | Moq.Path.Valid | undefined) {
-		this.broadcast.path.set(value ? Moq.Path.from(value) : undefined);
+	set name(value: string | Moq.Path.Valid | undefined) {
+		this.broadcast.name.set(value ? Moq.Path.from(value) : undefined);
 	}
 
 	get source(): SourceType | File | undefined {
